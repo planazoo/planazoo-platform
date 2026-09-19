@@ -829,6 +829,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
                       planName: widget.plan.name,
                       eventId: eventId,
                       eventDescription: newEvent.description,
+                      proposerUserId: newEvent.userId,
                     )
                     .timeout(const Duration(seconds: 2));
               } catch (_) {}

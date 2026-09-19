@@ -428,6 +428,195 @@ void main() {
       expect(url, contains('destination=3.0%2C3.0'));
       expect(url, contains('waypoints=2.0%2C2.0'));
     });
+
+    test('separa tramos andando y coche según Desplazamiento', () {
+      final events = [
+        _placeEvent(
+          id: 'a',
+          date: planStart,
+          hour: 9,
+          minute: 0,
+          description: 'A',
+          lat: 41.90,
+          lng: 12.49,
+        ),
+        _placeEvent(
+          id: 'b',
+          date: planStart,
+          hour: 11,
+          minute: 0,
+          description: 'B',
+          lat: 41.901,
+          lng: 12.491,
+        ),
+        sampleEvent(
+          planId: 'plan1',
+          userId: 'owner',
+          description: 'Taxi al C',
+          date: planStart,
+          hour: 12,
+          typeFamily: 'Desplazamiento',
+          commonPart: EventCommonPart(
+            description: 'Taxi al C',
+            date: planStart,
+            startHour: 12,
+            startMinute: 0,
+            durationMinutes: 30,
+            family: 'Desplazamiento',
+            subtype: 'Taxi',
+            extraData: {
+              'taxiOriginLat': 41.901,
+              'taxiOriginLng': 12.491,
+              'taxiDestinationLat': 41.89,
+              'taxiDestinationLng': 12.48,
+            },
+          ),
+        ).copyWith(id: 'taxi1', typeSubtype: 'Taxi'),
+        _placeEvent(
+          id: 'c',
+          date: planStart,
+          hour: 13,
+          minute: 0,
+          description: 'C',
+          lat: 41.89,
+          lng: 12.48,
+        ),
+        _placeEvent(
+          id: 'd',
+          date: planStart,
+          hour: 16,
+          minute: 0,
+          description: 'D',
+          lat: 41.892,
+          lng: 12.485,
+        ),
+      ];
+      final data = PlanMapStopBuilder.build(
+        plan: plan,
+        events: events,
+        accommodations: const [],
+      );
+      final dayStops = data.visibleStops(0);
+      final segments = PlanMapStopBuilder.dayRouteSegments(
+        dayStops,
+        events: events,
+        dayIndex: 0,
+      );
+      expect(
+        segments.where((s) => s.mode == PlanMapsTravelMode.walking).length,
+        2,
+      );
+      expect(
+        segments.where((s) => s.mode == PlanMapsTravelMode.driving).length,
+        1,
+      );
+
+      final walkUrls = PlanMapStopBuilder.googleMapsDirUrls(
+        dayStops,
+        mode: PlanMapsTravelMode.walking,
+        events: events,
+        dayIndex: 0,
+      );
+      final driveUrls = PlanMapStopBuilder.googleMapsDirUrls(
+        dayStops,
+        mode: PlanMapsTravelMode.driving,
+        events: events,
+        dayIndex: 0,
+      );
+      expect(walkUrls, isNotEmpty);
+      expect(walkUrls.every((u) => u.contains('travelmode=walking')), isTrue);
+      // Coche (prueba): todos los pines del día en una ruta driving (A,B,C,D).
+      expect(driveUrls.length, 1);
+      expect(driveUrls.single, contains('travelmode=driving'));
+      expect(driveUrls.single, contains('origin='));
+      expect(driveUrls.single, contains('destination='));
+      expect(driveUrls.single, contains('waypoints='));
+    });
+
+    test('parte URLs si hay más de 10 puntos en un tramo', () {
+      final events = <Event>[
+        for (var i = 0; i < 12; i++)
+          _placeEvent(
+            id: 'p$i',
+            date: planStart,
+            hour: 8 + (i ~/ 2),
+            minute: (i % 2) * 30,
+            description: 'P$i',
+            lat: 41.9 + i * 0.001,
+            lng: 12.5 + i * 0.001,
+          ),
+      ];
+      final data = PlanMapStopBuilder.build(
+        plan: plan,
+        events: events,
+        accommodations: const [],
+      );
+      final urls = PlanMapStopBuilder.googleMapsDirUrls(
+        data.visibleStops(0),
+        mode: PlanMapsTravelMode.walking,
+        events: events,
+        dayIndex: 0,
+      );
+      // 12 puntos → 10 + solape + resto (3), sin tramo fantasma de 1 punto.
+      expect(urls.length, 2);
+      expect(urls.every((u) => u.contains('/maps/dir/')), isTrue);
+    });
+
+    test('6 visitas sin taxi O/D → un solo tramo andando con las 6', () {
+      final events = <Event>[
+        for (var i = 0; i < 6; i++)
+          _placeEvent(
+            id: 'v$i',
+            date: planStart,
+            hour: 9 + i,
+            minute: 0,
+            description: 'V$i',
+            lat: 41.9 + i * 0.002,
+            lng: 12.5 + i * 0.002,
+          ),
+        // Taxi sin coords O/D no debe partir el día (antes lo hacía por hora).
+        sampleEvent(
+          planId: 'plan1',
+          userId: 'owner',
+          description: 'Taxi suelto',
+          date: planStart,
+          hour: 11,
+          typeFamily: 'Desplazamiento',
+          commonPart: EventCommonPart(
+            description: 'Taxi suelto',
+            date: planStart,
+            startHour: 11,
+            startMinute: 0,
+            durationMinutes: 20,
+            family: 'Desplazamiento',
+            subtype: 'Taxi',
+          ),
+        ).copyWith(id: 'taxi-loose', typeSubtype: 'Taxi'),
+      ];
+      final data = PlanMapStopBuilder.build(
+        plan: plan,
+        events: events,
+        accommodations: const [],
+      );
+      final dayStops = data.visibleStops(0);
+      final segments = PlanMapStopBuilder.dayRouteSegments(
+        dayStops,
+        events: events,
+        dayIndex: 0,
+      );
+      final walking =
+          segments.where((s) => s.mode == PlanMapsTravelMode.walking).toList();
+      expect(walking.length, 1);
+      expect(walking.single.stops.length, 6);
+      final urls = PlanMapStopBuilder.googleMapsDirUrls(
+        dayStops,
+        mode: PlanMapsTravelMode.walking,
+        events: events,
+        dayIndex: 0,
+      );
+      expect(urls.length, 1);
+      expect(urls.single, contains('waypoints='));
+    });
   });
 
   group('PlanMapDayColors', () {

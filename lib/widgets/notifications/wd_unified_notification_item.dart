@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../app/theme/color_scheme.dart';
 import '../../features/calendar/domain/models/plan_invitation.dart';
 import '../../features/calendar/domain/models/pending_email_event.dart';
+import '../../features/calendar/domain/models/plan.dart';
 import '../../features/calendar/domain/services/plan_service.dart';
 import '../../features/calendar/presentation/providers/calendar_providers.dart';
 import '../../features/notifications/domain/models/unified_notification.dart';
@@ -12,6 +13,7 @@ import '../../features/calendar/presentation/providers/invitation_providers.dart
 import '../../features/calendar/presentation/providers/plan_participation_providers.dart';
 import '../../widgets/screens/wd_pending_event_card.dart';
 import '../../widgets/dialogs/invitation_response_dialog.dart';
+import '../../widgets/wd_event_dialog.dart';
 import '../../shared/utils/date_formatter.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -32,6 +34,27 @@ class UnifiedNotificationItem extends ConsumerWidget {
     this.onPendingEventAction,
   });
 
+  bool get _canOpenEvent {
+    switch (notification.type) {
+      case UnifiedNotificationType.eventProposed:
+      case UnifiedNotificationType.eventCreated:
+      case UnifiedNotificationType.eventUpdated:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  Future<void> _markReadIfNeeded(WidgetRef ref) async {
+    if (userId == null) return;
+    if (notification.source != UnifiedNotificationSource.usersNotifications) {
+      return;
+    }
+    final id = notification.data?['notificationId'] as String?;
+    if (id == null) return;
+    await ref.read(notificationServiceProvider).markAsRead(userId!, id);
+  }
+
   Future<void> _openInvitationDialog(BuildContext context, WidgetRef ref) async {
     final planId = notification.planId;
     if (planId == null || planId.isEmpty) return;
@@ -42,14 +65,81 @@ class UnifiedNotificationItem extends ConsumerWidget {
       barrierDismissible: false,
       builder: (dialogContext) => InvitationResponseDialog(plan: plan),
     );
-    if (userId != null &&
-        notification.source == UnifiedNotificationSource.usersNotifications) {
-      final id = notification.data?['notificationId'] as String?;
-      if (id != null) {
-        await ref.read(notificationServiceProvider).markAsRead(userId!, id);
-      }
-    }
+    await _markReadIfNeeded(ref);
     onInvitationResponded?.call();
+  }
+
+  Future<void> _openRelatedEvent(BuildContext context, WidgetRef ref) async {
+    final loc = AppLocalizations.of(context)!;
+    final eventId = notification.eventId;
+    final planId = notification.planId;
+    if (eventId == null || eventId.isEmpty || planId == null || planId.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.notificationOpenEventMissing)),
+        );
+      }
+      return;
+    }
+
+    final eventService = ref.read(eventServiceProvider);
+    final event = await eventService.getEventByIdFromServer(eventId) ??
+        await eventService.getEventById(eventId);
+    if (!context.mounted) return;
+    if (event == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.notificationOpenEventError)),
+      );
+      await _markReadIfNeeded(ref);
+      return;
+    }
+
+    final plan = await PlanService().getPlanById(planId);
+    if (!context.mounted) return;
+    if (plan == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.notificationOpenEventError)),
+      );
+      return;
+    }
+
+    await _markReadIfNeeded(ref);
+    if (!context.mounted) return;
+
+    await showEventFormDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      dialog: EventDialog(
+        event: event,
+        planId: planId,
+        onSaved: (updatedEvent) async {
+          final ok = await eventService.updateEvent(updatedEvent);
+          if (!ok) throw Exception('updateEvent failed');
+          _invalidatePlanEventProviders(ref, plan);
+          if (context.mounted) Navigator.of(context).pop();
+        },
+        onDeleted: (id) async {
+          await eventService.deleteEvent(id);
+          _invalidatePlanEventProviders(ref, plan);
+          if (context.mounted) Navigator.of(context).pop();
+        },
+      ),
+    );
+  }
+
+  void _invalidatePlanEventProviders(WidgetRef ref, Plan plan) {
+    final planId = plan.id;
+    if (planId == null) return;
+    final calendarParams = CalendarNotifierParams(
+      planId: planId,
+      userId: plan.userId,
+      initialDate: plan.startDate,
+      initialColumnCount: plan.durationInDays,
+    );
+    ref.invalidate(calendarNotifierProvider(calendarParams));
+    ref.invalidate(planEventsStreamProvider(planId));
+    ref.invalidate(globalNotificationsListProvider);
+    ref.invalidate(globalUnreadCountProvider);
   }
 
   @override
@@ -96,7 +186,9 @@ class UnifiedNotificationItem extends ConsumerWidget {
     return InformativeNotificationTile(
       notification: notification,
       userId: userId,
-      onMarkRead: userId != null && notification.source == UnifiedNotificationSource.usersNotifications
+      onMarkRead: userId != null &&
+              notification.source == UnifiedNotificationSource.usersNotifications &&
+              !_canOpenEvent
           ? () async {
               final id = notification.data?['notificationId'] as String?;
               if (id != null) {
@@ -104,6 +196,7 @@ class UnifiedNotificationItem extends ConsumerWidget {
               }
             }
           : null,
+      onTap: _canOpenEvent ? () => _openRelatedEvent(context, ref) : null,
     );
   }
 }
@@ -385,6 +478,14 @@ class InformativeNotificationTile extends StatelessWidget {
                       ],
                     ),
                   ),
+                ),
+              ],
+              if (onTap != null) ...[
+                const SizedBox(width: 6),
+                Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: isUnread ? Colors.white70 : Colors.white38,
                 ),
               ],
             ],

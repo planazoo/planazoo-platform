@@ -30,12 +30,14 @@ import 'package:unp_calendario/widgets/dialogs/delete_event_dialog.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_file_service.dart';
 import 'package:unp_calendario/widgets/plan/entity_attachments_section.dart';
+import 'package:unp_calendario/widgets/plan/entity_authorship_section.dart';
 import 'package:unp_calendario/widgets/plan/entity_communications_section.dart';
 import 'package:unp_calendario/widgets/plan/reservation_cancellation_form_section.dart';
 import 'package:unp_calendario/features/places/data/places_api_service.dart';
 import 'package:unp_calendario/features/places/presentation/widgets/place_autocomplete_field.dart';
 import 'package:unp_calendario/features/flights/data/flight_status_service.dart';
 import 'package:unp_calendario/features/flights/data/flight_status_result.dart';
+import 'package:unp_calendario/features/flights/data/airline_iata_names.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -107,6 +109,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   bool _canEditGeneral = false;
   bool _isAdmin = false;
   bool _isCreator = false;
+  bool _isOrganizer = false;
+  bool _isObserver = false;
   PlanPermissions? _userPermissions;
   bool _isInitializing = true;
   Plan? _plan; // T109: Plan para verificar estado
@@ -115,16 +119,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   // Inicializar _canEditGeneral como true si se está creando un evento nuevo
   // para que el campo de descripción esté habilitado desde el inicio
-  bool get _canEditGeneralInitial => widget.event == null;
+  bool get _canEditGeneralInitial => widget.event == null && !_isObserver;
 
-  /// T252: Participante creando evento nuevo → solo puede guardar como propuesta (borrador).
-  bool get _isParticipantCreatingProposal {
-    final user = ref.read(currentUserProvider);
-    return _plan != null &&
-        user != null &&
-        widget.event == null &&
-        _plan!.userId != user.id;
-  }
+  /// Participante (no organizador) creando → solo propuesta (borrador).
+  bool get _isParticipantCreatingProposal =>
+      widget.event == null && !_isOrganizer && !_isObserver;
 
   // Campos de información personal
   late TextEditingController _asientoController;
@@ -139,6 +138,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   late bool _tarjetaObtenida;
   // T246: número de vuelo (Desplazamiento / Avión)
   late TextEditingController _flightNumberController;
+  late TextEditingController _airlineNameController;
   late TextEditingController _departureAirportController;
   late TextEditingController _arrivalAirportController;
   PlaceDetails? _departureAirportDetails;
@@ -374,6 +374,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       text:
           widget.event?.commonPart?.extraData?['flightNumber'] as String? ?? '',
     );
+    _airlineNameController = TextEditingController(
+      text: widget.event?.commonPart?.extraData?['airlineName'] as String? ?? '',
+    );
     final ed = widget.event?.commonPart?.extraData;
     final depAirport = ed?['departureAirport'] as String? ??
         ed?['originName'] as String? ??
@@ -381,8 +384,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final arrAirport = ed?['arrivalAirport'] as String? ??
         ed?['destinationName'] as String? ??
         '';
-    _departureAirportController = TextEditingController(text: depAirport);
-    _arrivalAirportController = TextEditingController(text: arrAirport);
+    _departureAirportController = TextEditingController(
+      text: depAirport.replaceAll(RegExp(r'\s*\n\s*'), ', ').trim(),
+    );
+    _arrivalAirportController = TextEditingController(
+      text: arrAirport.replaceAll(RegExp(r'\s*\n\s*'), ', ').trim(),
+    );
     final originName = (ed?['taxiOriginName'] as String?)?.trim() ?? '';
     final originAddress =
         (ed?['taxiOriginAddress'] as String?)?.trim() ?? '';
@@ -617,7 +624,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     try {
       final planService = ref.read(planServiceProvider);
       final plan = await planService.getPlanById(widget.planId!);
-      final currentUser = ref.read(currentUserProvider);
       if (plan != null && mounted) {
         setState(() {
           _plan = plan;
@@ -628,20 +634,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             _selectedTimezone = plan.timezone!;
             _selectedArrivalTimezone = plan.timezone!;
           }
-          // T252: Si es participante creando evento nuevo, solo puede ser borrador (propuesta)
-          if (widget.event == null &&
-              currentUser != null &&
-              plan.userId != currentUser.id) {
-            _isDraft = true;
-          }
-          // T252: El organizador debe poder ver el selector borrador/confirmado en cualquier evento (p. ej. para aceptar propuestas)
-          if (currentUser != null && plan.userId == currentUser.id) {
-            _canEditGeneral = true;
-          }
           if (widget.event == null) {
             _syncAccentColorFromPlanConfig();
           }
         });
+        await _applyEventEditPermissions();
       }
     } catch (e) {
       // Si falla, no hacer nada
@@ -662,12 +659,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   Future<void> _initializePermissions() async {
     final currentUser = ref.read(currentUserProvider);
 
-    // Si es un evento nuevo, permitir edición desde el inicio
-    final isCreating = widget.event == null;
-    if (isCreating) {
-      _canEditGeneral = true;
-    }
-
     if (currentUser?.id == null || widget.planId == null) {
       _isInitializing = false;
       if (mounted) setState(() {});
@@ -682,7 +673,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
     // Si no hay permisos específicos, usar permisos por defecto según el rol
     _userPermissions ??= PlanPermissions(
-      // Por defecto, asumir que es participante si no hay permisos específicos
       planId: widget.planId!,
       userId: currentUser.id,
       role: UserRole.participant,
@@ -691,23 +681,61 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       assignedAt: DateTime.now(),
     );
 
-    // Determinar permisos de edición
+    await _applyEventEditPermissions();
+  }
+
+  /// Matriz: organizador → cualquier evento; creador → el suyo;
+  /// participante creando → propuesta; observador → solo lectura.
+  /// Estado finalizado/cancelado lo aplica [_canSaveEvent] / [_canDeleteEvent].
+  Future<void> _applyEventEditPermissions() async {
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser?.id == null || widget.planId == null) {
+      _isInitializing = false;
+      if (mounted) setState(() {});
+      return;
+    }
+
+    final participation = await ref
+        .read(planParticipationServiceProvider)
+        .getParticipation(widget.planId!, currentUser!.id);
+
+    Plan? plan = _plan;
+    if (plan == null) {
+      plan = await ref.read(planServiceProvider).getPlanById(widget.planId!);
+      if (plan != null) _plan = plan;
+    }
+
+    final isPlanOwner = plan?.userId == currentUser.id;
+    final isOrganizer =
+        isPlanOwner || (participation?.isOrganizer ?? false);
+    final isObserver = !isOrganizer && (participation?.isObserver ?? false);
+    final isCreating = widget.event == null;
     final isOwner = widget.event?.userId == currentUser.id;
 
-    _isCreator = isOwner;
-    _isAdmin = _userPermissions?.isAdmin ?? false;
-
-    // Puede editar la parte general si:
-    // - Es admin
-    // - Está creando un evento nuevo
-    // - Es el creador del evento
-    _canEditGeneral = _isAdmin || isCreating || isOwner;
-
-    _isInitializing = false;
-
-    if (mounted) {
-      setState(() {});
+    final bool canEditGeneral;
+    if (isObserver) {
+      canEditGeneral = false;
+    } else if (isOrganizer) {
+      canEditGeneral = true;
+    } else if (isCreating) {
+      canEditGeneral = true; // participante: crea como propuesta
+    } else {
+      canEditGeneral = isOwner;
     }
+
+    if (!mounted) return;
+    setState(() {
+      _isOrganizer = isOrganizer;
+      _isObserver = isObserver;
+      _isCreator = isOwner;
+      // Pestaña «Otros»: organizadores (gestión del plan).
+      _isAdmin = isOrganizer || (_userPermissions?.isAdmin ?? false);
+      _canEditGeneral = canEditGeneral;
+      if (isCreating && !isOrganizer && !isObserver) {
+        _isDraft = true;
+      }
+      _isInitializing = false;
+    });
   }
 
   @override
@@ -728,6 +756,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _activityEntryCodeController.dispose();
     _activityEntryDocUrlController.dispose();
     _flightNumberController.dispose();
+    _airlineNameController.dispose();
     _departureAirportController.dispose();
     _arrivalAirportController.dispose();
     _taxiOriginController.dispose();
@@ -794,6 +823,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   /// Localización: un solo campo con nombre (1ª línea) y dirección (2ª).
   /// Fila Places dentro de card Settings (label arriba + autocomplete).
+  /// [singleLine]: una sola línea con ellipsis (p. ej. aeropuertos de vuelo).
+  /// [trailing]: a la derecha del título del campo (p. ej. timezone en vuelos).
   Widget _iosPlaceFieldRow({
     required String label,
     required String hint,
@@ -802,18 +833,20 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     String? initialAddress,
     VoidCallback? onOpenMaps,
     bool canOpenMaps = false,
+    bool singleLine = false,
+    Widget? trailing,
   }) {
     final canEdit = _canEditGeneral || _canEditGeneralInitial;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
                   label,
                   style: const TextStyle(
                     color: IosFormColors.textSecondary,
@@ -821,62 +854,63 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-                const SizedBox(height: 4),
-                IgnorePointer(
-                  ignoring: !canEdit,
-                  child: Theme(
-                    data: Theme.of(context).copyWith(
-                      inputDecorationTheme: const InputDecorationTheme(
-                        contentPadding: EdgeInsets.zero,
-                        filled: true,
-                        fillColor: Colors.transparent,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                      ),
-                    ),
-                    child: PlaceAutocompleteField(
-                      controller: controller,
-                      initialAddress: initialAddress,
-                      lodgingOnly: false,
-                      preferNameAndAddressTwoLines: true,
-                      maxLines: 2,
-                      showFloatingLabel: false,
-                      labelText: label,
-                      hintText: hint,
-                      fontSize: 17,
-                      fillColor: Colors.transparent,
-                      border: InputBorder.none,
-                      onPlaceSelected: onPlaceSelected,
-                    ),
+              ),
+              if (trailing != null) trailing,
+              if (onOpenMaps != null)
+                IconButton(
+                  tooltip: AppLocalizations.of(context)!.openInGoogleMaps,
+                  onPressed: canOpenMaps ? onOpenMaps : null,
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 28,
+                    minHeight: 28,
+                    maxWidth: 28,
+                    maxHeight: 28,
+                  ),
+                  style: IconButton.styleFrom(
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  icon: Icon(
+                    Icons.map_outlined,
+                    size: 20,
+                    color: canOpenMaps
+                        ? IosFormColors.accent
+                        : IosFormColors.textTertiary,
                   ),
                 ),
-              ],
+            ],
+          ),
+          const SizedBox(height: 4),
+          IgnorePointer(
+            ignoring: !canEdit,
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                inputDecorationTheme: const InputDecorationTheme(
+                  contentPadding: EdgeInsets.zero,
+                  filled: true,
+                  fillColor: Colors.transparent,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                ),
+              ),
+              child: PlaceAutocompleteField(
+                controller: controller,
+                initialAddress: initialAddress,
+                lodgingOnly: false,
+                preferNameAndAddressTwoLines: !singleLine,
+                maxLines: singleLine ? 1 : 2,
+                showFloatingLabel: false,
+                labelText: label,
+                hintText: hint,
+                fontSize: 17,
+                fillColor: Colors.transparent,
+                border: InputBorder.none,
+                onPlaceSelected: onPlaceSelected,
+              ),
             ),
           ),
-          if (onOpenMaps != null)
-            IconButton(
-              tooltip: AppLocalizations.of(context)!.openInGoogleMaps,
-              onPressed: canOpenMaps ? onOpenMaps : null,
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(
-                minWidth: 28,
-                minHeight: 28,
-                maxWidth: 28,
-                maxHeight: 28,
-              ),
-              style: IconButton.styleFrom(
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              icon: Icon(
-                Icons.map_outlined,
-                size: 20,
-                color: canOpenMaps
-                    ? IosFormColors.accent
-                    : IosFormColors.textTertiary,
-              ),
-            ),
         ],
       ),
     );
@@ -884,6 +918,56 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   String _timezoneRowValue(String timezone) =>
       '${TimezoneService.getTimezoneCityName(timezone)} (${TimezoneService.getUtcOffsetFormatted(timezone)})';
+
+  /// Chip compacto de TZ junto al aeropuerto (ciudad · GMT±N).
+  Widget _compactFlightTimezoneChip({
+    required String timezone,
+    required bool canEdit,
+    required VoidCallback? onTap,
+  }) {
+    final city = TimezoneService.getTimezoneCityName(timezone);
+    final offset = TimezoneService.getUtcOffsetFormatted(timezone);
+    final label = '$city · $offset';
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: canEdit ? onTap : null,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 120),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: canEdit
+                        ? IosFormColors.accent
+                        : IosFormColors.textSecondary,
+                  ),
+                ),
+              ),
+              if (canEdit) ...[
+                const SizedBox(width: 1),
+                Icon(
+                  Icons.chevron_right,
+                  size: 14,
+                  color: IosFormColors.textTertiary,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildUnifiedLocationField() {
     final loc = AppLocalizations.of(context)!;
@@ -2098,20 +2182,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
-  /// Formatea horarios de salida/llegada para la tarjeta del vuelo (T246).
-  String _formatFlightTimes(String? depIso, String? arrIso) {
-    final dep =
-        depIso != null && depIso.isNotEmpty ? DateTime.tryParse(depIso) : null;
-    final arr =
-        arrIso != null && arrIso.isNotEmpty ? DateTime.tryParse(arrIso) : null;
-    if (dep != null && arr != null) {
-      return '${DateFormatter.formatTimeOnly(dep)} – ${DateFormatter.formatTimeOnly(arr)}';
-    }
-    if (dep != null) return DateFormatter.formatTimeOnly(dep);
-    if (arr != null) return DateFormatter.formatTimeOnly(arr);
-    return '';
-  }
-
   /// Construye la descripción a guardar: si el usuario rellenó el campo, se usa; si no, se genera solo a partir de subtipo y ubicación.
   String _buildDescriptionForSave() {
     final userDesc = _descriptionController.text.trim();
@@ -2729,20 +2799,91 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     });
   }
 
-  /// T246: Bloque vuelo (aeropuertos + nº + Amadeus) en card Settings.
-  Widget _buildFlightNumberBlock() {
+  /// Nº de vuelo + compañía (bajo el hero). Autocompletar = icono en la fila del nº.
+  Widget _buildFlightIdentityBlock() {
+    final loc = AppLocalizations.of(context)!;
+    final canEdit = _canEditGeneral;
+    return IosGroupedCard(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: IgnorePointer(
+                ignoring: !canEdit,
+                child: IosEditField(
+                  label: loc.flightNumberLabel,
+                  controller: _flightNumberController,
+                  hint: loc.flightNumberHint,
+                  onChanged:
+                      canEdit ? (_) => _suggestAirlineFromFlightNumber() : null,
+                ),
+              ),
+            ),
+            if (canEdit)
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Tooltip(
+                  message: loc.getFlightDataButton,
+                  child: IconButton(
+                    onPressed:
+                        _flightStatusLoading ? null : _fetchFlightStatus,
+                    visualDensity: VisualDensity.compact,
+                    iconSize: 20,
+                    color: IosFormColors.accent,
+                    icon: _flightStatusLoading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.auto_awesome),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const IosRowSeparator(),
+        IgnorePointer(
+          ignoring: !canEdit,
+          child: IosEditField(
+            label: loc.airlineNameLabel,
+            controller: _airlineNameController,
+            hint: loc.airlineNameHint,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _suggestAirlineFromFlightNumber({bool force = false}) {
+    if (!force && _airlineNameController.text.trim().isNotEmpty) return;
+    final suggested =
+        airlineNameFromFlightNumber(_flightNumberController.text);
+    if (suggested == null || suggested.isEmpty) return;
+    _airlineNameController.text = suggested;
+  }
+
+  /// Aeropuertos + TZ del vuelo (después del bloque identidad).
+  Widget _buildFlightAirportsBlock() {
     final loc = AppLocalizations.of(context)!;
     final canEdit = _canEditGeneral;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        IosSectionLabel(loc.flightNumberLabel),
+        IosSectionLabel(loc.flightAirportsSectionLabel),
         IosGroupedCard(
           children: [
             _iosPlaceFieldRow(
               label: loc.departureAirportLabel,
               hint: loc.departureAirportHint,
               controller: _departureAirportController,
+              singleLine: true,
+              trailing: _compactFlightTimezoneChip(
+                timezone: _selectedTimezone,
+                canEdit: canEdit,
+                onTap: () => _openFlightTimezonePicker(isArrival: false),
+              ),
               onPlaceSelected: (PlaceDetails details) {
                 setState(() {
                   _departureAirportDetails = details;
@@ -2759,19 +2900,17 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 );
               },
             ),
-            IosSettingsRow(
-              label: loc.timezone,
-              value: _timezoneRowValue(_selectedTimezone),
-              chevron: canEdit,
-              onTap: canEdit
-                  ? () => _openFlightTimezonePicker(isArrival: false)
-                  : null,
-            ),
             const IosRowSeparator(),
             _iosPlaceFieldRow(
               label: loc.arrivalAirportLabel,
               hint: loc.arrivalAirportHint,
               controller: _arrivalAirportController,
+              singleLine: true,
+              trailing: _compactFlightTimezoneChip(
+                timezone: _selectedArrivalTimezone,
+                canEdit: canEdit,
+                onTap: () => _openFlightTimezonePicker(isArrival: true),
+              ),
               onPlaceSelected: (PlaceDetails details) {
                 setState(() {
                   _arrivalAirportDetails = details;
@@ -2788,53 +2927,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 );
               },
             ),
-            IosSettingsRow(
-              label: loc.arrivalTimezone,
-              value: _timezoneRowValue(_selectedArrivalTimezone),
-              chevron: canEdit,
-              onTap: canEdit
-                  ? () => _openFlightTimezonePicker(isArrival: true)
-                  : null,
-            ),
-            const IosRowSeparator(),
-            IgnorePointer(
-              ignoring: !canEdit,
-              child: IosEditField(
-                label: loc.flightNumberLabel,
-                controller: _flightNumberController,
-                hint: loc.flightNumberHint,
-              ),
-            ),
-            if (canEdit) ...[
-              const IosRowSeparator(),
-              IosSettingsRow(
-                label: loc.getFlightDataButton,
-                value: _flightStatusLoading
-                    ? '…'
-                    : (_lastFlightStatus?.shortDescription ?? ''),
-                valueColor: IosFormColors.accent,
-                chevron: !_flightStatusLoading,
-                onTap: _flightStatusLoading ? null : _fetchFlightStatus,
-              ),
-            ],
-            if (_lastFlightStatus != null &&
-                (_lastFlightStatus!.departureScheduled != null ||
-                    _lastFlightStatus!.arrivalScheduled != null)) ...[
-              const IosRowSeparator(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-                child: Text(
-                  _formatFlightTimes(
-                    _lastFlightStatus!.departureScheduled,
-                    _lastFlightStatus!.arrivalScheduled,
-                  ),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: IosFormColors.textSecondary,
-                  ),
-                ),
-              ),
-            ],
           ],
         ),
       ],
@@ -2879,6 +2971,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             result.originName ?? result.originIata ?? '';
         _arrivalAirportController.text =
             result.destinationName ?? result.destinationIata ?? '';
+        final amadeusAirline = result.airlineName?.trim();
+        if (amadeusAirline != null && amadeusAirline.isNotEmpty) {
+          _airlineNameController.text = amadeusAirline;
+        } else {
+          _suggestAirlineFromFlightNumber(force: true);
+        }
         final dep = result.departureScheduled;
         final arr = result.arrivalScheduled;
         if (dep != null && dep.isNotEmpty) {
@@ -3569,6 +3667,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ],
             );
           }),
+          if ((_typeFamilyController.text == 'Desplazamiento' &&
+                  _typeSubtypeController.text == 'Avión') &&
+              (widget.event != null || _hasGeneralEventTypeSelected())) ...[
+            const SizedBox(height: spacing),
+            _wrapReadOnlyIfNeeded(child: _buildFlightIdentityBlock()),
+          ],
           // Tipo / subtipo (label solo dentro de la fila Settings)
           const SizedBox(height: spacing),
           IosGroupedCard(
@@ -3591,7 +3695,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 _typeSubtypeController.text == 'Avión') ...[
               const SizedBox(height: spacing),
-              _wrapReadOnlyIfNeeded(child: _buildFlightNumberBlock()),
+              _wrapReadOnlyIfNeeded(child: _buildFlightAirportsBlock()),
             ],
             // Ubicación / transporte / extras
             if (_typeFamilyController.text != 'Desplazamiento') ...[
@@ -3729,6 +3833,17 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             const SizedBox(height: spacing),
             // Color
             _wrapReadOnlyIfNeeded(child: _buildColorSelectorRow()),
+            if (widget.event != null) ...[
+              const SizedBox(height: spacing),
+              EntityAuthorshipSection(
+                createdAt: widget.event!.createdAt,
+                createdByUserId: widget.event!.userId,
+                planId: widget.planId,
+                isProposal: widget.event!.isDraft &&
+                    _plan != null &&
+                    widget.event!.userId != _plan!.userId,
+              ),
+            ],
           ],
           if (widget.event != null &&
               _canDeleteEvent() &&
@@ -3983,9 +4098,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final personalPart = widget.event?.personalParts?[participantId];
     final personalFields = personalPart?.fields ?? {};
     final isActivity = widget.event?.commonPart?.family == 'Actividad';
-    final canEditOthers = _userPermissions
-            ?.hasPermission(Permission.eventEditOthersPersonal) ??
-        false;
+    final canEditOthers = _isOrganizer ||
+        (_userPermissions
+                ?.hasPermission(Permission.eventEditOthersPersonal) ??
+            false);
 
     final rows = <Widget>[
       IosSettingsRow(
@@ -4800,11 +4916,18 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           baseExtra['airlineName'] = _lastFlightStatus!.airlineName;
         }
       }
-      // Número de vuelo manual (persistir aunque no se use Amadeus)
+      // Número de vuelo / compañía (persistir también sin Amadeus)
       final flightNoManual = _flightNumberController.text.trim();
       if (flightNoManual.isNotEmpty) {
         baseExtra['flightNumber'] =
             Sanitizer.sanitizePlainText(flightNoManual, maxLength: 32);
+      }
+      final airlineManual = _airlineNameController.text.trim();
+      if (airlineManual.isNotEmpty) {
+        baseExtra['airlineName'] =
+            Sanitizer.sanitizePlainText(airlineManual, maxLength: 80);
+      } else {
+        baseExtra.remove('airlineName');
       }
       // Aeropuerto salida/llegada (Desplazamiento / Avión) — texto y opcionalmente lat/lng desde Places
       if (_typeFamilyController.text == 'Desplazamiento' &&

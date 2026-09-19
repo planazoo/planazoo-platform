@@ -1570,6 +1570,10 @@
   "@notificationsMarkAllAsRead": { "description": "Botón en lista global notificaciones" },
   "notificationsEmpty": "No hay notificaciones",
   "@notificationsEmpty": { "description": "Lista global vacía" },
+  "notificationOpenEventError": "No se pudo abrir el evento. Puede que se haya eliminado.",
+  "@notificationOpenEventError": { "description": "Tap notification with eventId but event missing" },
+  "notificationOpenEventMissing": "Esta notificación no tiene un evento vinculado.",
+  "@notificationOpenEventMissing": { "description": "eventProposed without eventId" },
   "notificationsGenerateTestData": "Generar notificaciones de prueba",
   "@notificationsGenerateTestData": { "description": "Botón para crear datos de prueba de todos los tipos" },
   "notificationsTestDataGenerated": "Creadas: {invitations} invitaciones, {pending} eventos correo, {app} notificaciones",
@@ -2282,8 +2286,16 @@
   "eventRentalPickupReturnNotesHint": "Ej: combustible, daños visibles, km, política de devolución",
   "flightNumberLabel": "Número de vuelo",
   "flightNumberHint": "Ej: IB6842, AF1135",
+  "airlineNameLabel": "Compañía aérea",
+  "@airlineNameLabel": { "description": "Campo aerolínea en evento Avión" },
+  "airlineNameHint": "Ej: Iberia, Vueling",
+  "@airlineNameHint": { "description": "Hint compañía aérea" },
+  "flightAirportsSectionLabel": "Aeropuertos",
+  "@flightAirportsSectionLabel": { "description": "Sección aeropuertos debajo de vuelo/compañía" },
   "flightDateLabel": "Fecha del vuelo",
-  "getFlightDataButton": "Obtener datos del vuelo",
+  "getFlightDataButton": "Autocompletar con Amadeus",
+  "flightAutofillShort": "Autocompletar",
+  "@flightAutofillShort": { "description": "Enlace compacto bajo nº vuelo/compañía" },
   "flightNumberRequired": "Introduce el número de vuelo (ej: IB6842).",
   "flightDataLoaded": "Datos del vuelo cargados.",
   "eventTabGeneral": "General",
@@ -2455,6 +2467,29 @@
   "eventSponsoredOpenError": "No se pudo abrir el enlace del patrocinador",
   "eventStatusDraft": "Borrador",
   "eventStatusConfirmed": "Confirmado",
+  "entityAuthorshipCreatedBy": "Creado por {name} · {date}",
+  "@entityAuthorshipCreatedBy": {
+    "description": "Pie de autoría en evento/alojamiento",
+    "placeholders": {
+      "name": { "type": "String" },
+      "date": { "type": "String" }
+    }
+  },
+  "entityAuthorshipProposedBy": "Propuesto por {name} · {date}",
+  "@entityAuthorshipProposedBy": {
+    "description": "Pie de autoría cuando el evento es propuesta/borrador de participante",
+    "placeholders": {
+      "name": { "type": "String" },
+      "date": { "type": "String" }
+    }
+  },
+  "entityAuthorshipDateOnly": "Creado · {date}",
+  "@entityAuthorshipDateOnly": {
+    "description": "Pie de autoría sin creador conocido",
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
   "isDraft": "Es borrador",
   "@isDraft": {
     "description": "Label de es borrador"
@@ -3000,6 +3035,42 @@
   "@planMapLoadError": { "description": "T279: fallo auth/carga JS" },
   "planMapOpenDayRoute": "Ruta del día en Google Maps",
   "@planMapOpenDayRoute": { "description": "T279: abrir /maps/dir del día" },
+  "planMapOpenWalkingRoute": "Abrir Maps · tramos andando",
+  "@planMapOpenWalkingRoute": { "description": "T279: Maps walking segments for selected day" },
+  "planMapOpenDrivingRoute": "Abrir Maps · tramos en coche",
+  "@planMapOpenDrivingRoute": { "description": "T279: Maps driving segments for selected day" },
+  "planMapOpenRoutePartsTitle": "Varios tramos",
+  "@planMapOpenRoutePartsTitle": { "description": "T279: sheet when mode has multiple Maps URLs" },
+  "planMapOpenRouteMoreHint": "Hay {count} tramos en Maps. El primero ya está abierto.",
+  "@planMapOpenRouteMoreHint": {
+    "description": "T279: snackbar after opening first of several Maps URLs",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "planMapOpenRoutePartsExplain": "Google Maps admite como máximo ~10 paradas por enlace. Este día se abre en {count} tramos.",
+  "@planMapOpenRoutePartsExplain": {
+    "description": "T279: explain why day is split into several Maps URLs",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "planMapOpenRoutePartOpened": "Tramo {part} de {total} (ya abierto)",
+  "@planMapOpenRoutePartOpened": {
+    "description": "T279: first chunk already launched in Maps",
+    "placeholders": {
+      "part": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "planMapOpenRoutePart": "Tramo {part} de {total}",
+  "@planMapOpenRoutePart": {
+    "description": "T279: one Maps URL chunk",
+    "placeholders": {
+      "part": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
   "planMapLegendHotel": "Alojamiento",
   "@planMapLegendHotel": { "description": "T279: pin H" },
   "planMapLegendAirport": "Aeropuerto",

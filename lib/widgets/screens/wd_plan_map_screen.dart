@@ -143,10 +143,99 @@ class _PlanMapScreenState extends State<PlanMapScreen> {
     }
   }
 
-  Future<void> _openDayRoute() async {
-    final url = PlanMapStopBuilder.googleMapsDirUrl(_visibleStops);
-    if (url == null) return;
-    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  Future<void> _openMapsMode(PlanMapsTravelMode mode) async {
+    if (_selectedDayIndex == null) return;
+    final urls = PlanMapStopBuilder.googleMapsDirUrls(
+      _visibleStops,
+      mode: mode,
+      events: widget.events,
+      dayIndex: _selectedDayIndex,
+    );
+    if (urls.isEmpty) return;
+
+    // Abrir siempre Maps (no quedarse en un listado interno).
+    await _launchMapsUrl(urls.first);
+    if (urls.length == 1 || !mounted) return;
+    // Si hay más partes (>10 puntos o varios tramos), ofrecer el resto
+    // en un sheet dismissible — no SnackBar (en web se queda pegado).
+    await _showRoutePartsSheet(mode, urls, openedFirst: true);
+  }
+
+  Future<void> _launchMapsUrl(String url) async {
+    await launchUrl(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+      webOnlyWindowName: '_blank',
+    );
+  }
+
+  Future<void> _showRoutePartsSheet(
+    PlanMapsTravelMode mode,
+    List<String> urls, {
+    bool openedFirst = false,
+  }) async {
+    if (!mounted) return;
+    final loc = AppLocalizations.of(context)!;
+    // Quitar snackbars previos por si quedaba alguno pegado.
+    ScaffoldMessenger.of(context).clearSnackBars();
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: IosFormColors.groupedBg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                child: Text(
+                  loc.planMapOpenRoutePartsTitle,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: IosFormColors.textPrimary,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Text(
+                  loc.planMapOpenRoutePartsExplain(urls.length),
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: IosFormColors.textSecondary,
+                  ),
+                ),
+              ),
+              for (var i = 0; i < urls.length; i++)
+                ListTile(
+                  leading: Icon(
+                    mode == PlanMapsTravelMode.walking
+                        ? Icons.directions_walk
+                        : Icons.directions_car,
+                    color: IosFormColors.textSecondary,
+                  ),
+                  title: Text(
+                    openedFirst && i == 0
+                        ? loc.planMapOpenRoutePartOpened(i + 1, urls.length)
+                        : loc.planMapOpenRoutePart(i + 1, urls.length),
+                  ),
+                  trailing: const Icon(Icons.open_in_new, size: 18),
+                  onTap: () async {
+                    Navigator.of(ctx).pop();
+                    await _launchMapsUrl(urls[i]);
+                  },
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _onMapRowTap(PlanMapStop stop) {
@@ -270,8 +359,25 @@ class _PlanMapScreenState extends State<PlanMapScreen> {
   }
 
   Widget _buildHeader(AppLocalizations loc) {
-    final canOpenDay =
-        PlanMapStopBuilder.googleMapsDirUrl(_visibleStops) != null;
+    final daySelected = _selectedDayIndex != null;
+    final walkUrls = daySelected
+        ? PlanMapStopBuilder.googleMapsDirUrls(
+            _visibleStops,
+            mode: PlanMapsTravelMode.walking,
+            events: widget.events,
+            dayIndex: _selectedDayIndex,
+          )
+        : const <String>[];
+    final driveUrls = daySelected
+        ? PlanMapStopBuilder.googleMapsDirUrls(
+            _visibleStops,
+            mode: PlanMapsTravelMode.driving,
+            events: widget.events,
+            dayIndex: _selectedDayIndex,
+          )
+        : const <String>[];
+    final canWalk = walkUrls.isNotEmpty;
+    final canDrive = driveUrls.isNotEmpty;
     return Container(
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -301,12 +407,22 @@ class _PlanMapScreenState extends State<PlanMapScreen> {
               ),
             ),
           ),
-          if (canOpenDay)
+          if (canWalk)
             IconButton(
-              tooltip: loc.planMapOpenDayRoute,
-              onPressed: _openDayRoute,
+              tooltip: loc.planMapOpenWalkingRoute,
+              onPressed: () => _openMapsMode(PlanMapsTravelMode.walking),
               icon: const Icon(
-                Icons.route,
+                Icons.directions_walk,
+                color: IosFormColors.textSecondary,
+                size: 22,
+              ),
+            ),
+          if (canDrive)
+            IconButton(
+              tooltip: loc.planMapOpenDrivingRoute,
+              onPressed: () => _openMapsMode(PlanMapsTravelMode.driving),
+              icon: const Icon(
+                Icons.directions_car,
                 color: IosFormColors.textSecondary,
                 size: 22,
               ),

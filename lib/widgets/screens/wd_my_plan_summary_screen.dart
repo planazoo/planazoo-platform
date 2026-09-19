@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -1997,11 +1998,30 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
               ),
             ),
           ),
-          IconButton(
-            tooltip: loc.planMapTooltip,
-            onPressed: onOpenMap,
-            icon: Icon(Icons.map_outlined, color: AppColorScheme.color2),
-          ),
+          if (kIsWeb)
+            TextButton.icon(
+              onPressed: onOpenMap,
+              icon: Icon(Icons.map_outlined, color: AppColorScheme.color2, size: 18),
+              label: Text(
+                loc.planMapTooltip,
+                style: GoogleFonts.poppins(
+                  color: AppColorScheme.color2,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            )
+          else
+            IconButton(
+              tooltip: loc.planMapTooltip,
+              onPressed: onOpenMap,
+              icon: Icon(Icons.map_outlined, color: AppColorScheme.color2),
+            ),
           if (canCreate) ...[
             const SizedBox(width: 4),
             Material(

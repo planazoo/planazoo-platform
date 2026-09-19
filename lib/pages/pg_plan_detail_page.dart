@@ -816,6 +816,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
                   planName: p.name,
                   eventId: eventId,
                   eventDescription: event.description,
+                  proposerUserId: event.userId,
                 )
                 .timeout(const Duration(seconds: 2));
           } catch (_) {}

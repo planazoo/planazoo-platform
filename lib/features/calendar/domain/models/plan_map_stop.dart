@@ -5,6 +5,29 @@ enum PlanMapStopKind {
   airport,
 }
 
+/// Modo de la URL de direcciones Google Maps (un travelmode por enlace).
+enum PlanMapsTravelMode {
+  walking,
+  driving,
+}
+
+/// Tramo homogéneo del día para abrir en Google Maps.
+class PlanMapsRouteSegment {
+  const PlanMapsRouteSegment({
+    required this.mode,
+    required this.stops,
+  });
+
+  final PlanMapsTravelMode mode;
+  /// Paradas ordenadas del tramo (≥2 para ruta; 1 solo pin).
+  final List<PlanMapStop> stops;
+
+  String get travelModeParam => switch (mode) {
+        PlanMapsTravelMode.walking => 'walking',
+        PlanMapsTravelMode.driving => 'driving',
+      };
+}
+
 class PlanMapStop {
   const PlanMapStop({
     required this.id,

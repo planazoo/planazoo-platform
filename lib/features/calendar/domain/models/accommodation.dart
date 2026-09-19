@@ -17,6 +17,8 @@ class Accommodation {
   final List<String> participantTrackIds; // IDs de tracks de participantes asignados
   final DateTime createdAt;
   final DateTime updatedAt;
+  /// Usuario que creó el alojamiento (igual idea que [Event.userId]).
+  final String? createdByUserId;
   // NUEVO: estructura parte común + parte personal (similar a eventos)
   final AccommodationCommonPart? commonPart;
   final Map<String, AccommodationPersonalPart>? personalParts; // key: participantId
@@ -42,6 +44,7 @@ class Accommodation {
     this.participantTrackIds = const [],
     required this.createdAt,
     required this.updatedAt,
+    this.createdByUserId,
     this.commonPart,
     this.personalParts,
     this.cost, // null por defecto (sin coste definido)
@@ -70,6 +73,8 @@ class Accommodation {
       participantTrackIds: List<String>.from(data['participantTrackIds'] ?? []),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      createdByUserId: data['createdByUserId'] as String? ??
+          data['userId'] as String?,
       commonPart: commonPart,
       personalParts: data['personalParts'] != null
           ? (data['personalParts'] as Map<String, dynamic>).map((k, v) => MapEntry(k, AccommodationPersonalPart.fromMap(v as Map<String, dynamic>)))
@@ -101,6 +106,8 @@ class Accommodation {
       'participantTrackIds': participantTrackIds,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
+      if (createdByUserId != null && createdByUserId!.isNotEmpty)
+        'createdByUserId': createdByUserId,
       'isDraft': isDraft,
       if (cost != null) 'cost': cost, // T101
     };
@@ -140,6 +147,7 @@ class Accommodation {
     List<String>? participantTrackIds,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? createdByUserId,
     AccommodationCommonPart? commonPart,
     Map<String, AccommodationPersonalPart>? personalParts,
     double? cost,
@@ -160,6 +168,7 @@ class Accommodation {
       participantTrackIds: participantTrackIds ?? this.participantTrackIds,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      createdByUserId: createdByUserId ?? this.createdByUserId,
       commonPart: commonPart ?? this.commonPart,
       personalParts: personalParts ?? this.personalParts,
       cost: cost ?? this.cost,

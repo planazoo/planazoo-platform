@@ -3,6 +3,7 @@ import '../../../../shared/services/logger_service.dart';
 import '../../../../shared/services/push_notification_sender.dart';
 import '../models/notification_model.dart';
 import '../services/notification_service.dart';
+import '../../../auth/domain/services/user_service.dart';
 import '../../../calendar/domain/services/plan_participation_service.dart';
 import '../../../calendar/domain/services/plan_service.dart';
 
@@ -306,12 +307,16 @@ class NotificationHelper {
   /// [planName] - Nombre del plan (opcional)
   /// [eventId] - ID del evento propuesto (opcional, si ya existe)
   /// [eventDescription] - Descripción del evento para el body
+  /// [proposerUserId] - Quién propone (para mostrar su nombre)
+  /// [proposerDisplayName] - Nombre ya resuelto (opcional; si falta se busca por [proposerUserId])
   Future<bool> notifyEventProposed({
     required String organizerUserId,
     required String planId,
     String? planName,
     String? eventId,
     String? eventDescription,
+    String? proposerUserId,
+    String? proposerDisplayName,
   }) async {
     try {
       String finalPlanName = planName ?? 'Un plan';
@@ -319,20 +324,52 @@ class NotificationHelper {
         final plan = await _planService.getPlanById(planId);
         if (plan != null) finalPlanName = plan.name;
       }
-      final body = eventDescription != null && eventDescription.isNotEmpty
-          ? (eventDescription.length > 80
-              ? '${eventDescription.substring(0, 80)}...'
-              : eventDescription)
-          : 'Un participante ha propuesto un nuevo evento.';
+
+      var proposerLabel = proposerDisplayName?.trim() ?? '';
+      if (proposerLabel.isEmpty &&
+          proposerUserId != null &&
+          proposerUserId.isNotEmpty) {
+        try {
+          final user = await UserService().getUserById(proposerUserId);
+          if (user != null) {
+            final name = user.displayName?.trim();
+            final username = user.username?.trim();
+            if (name != null && name.isNotEmpty) {
+              proposerLabel = name;
+            } else if (username != null && username.isNotEmpty) {
+              proposerLabel = username;
+            } else if (user.email.trim().isNotEmpty) {
+              proposerLabel = user.email.trim();
+            }
+          }
+        } catch (_) {}
+      }
+      if (proposerLabel.isEmpty) proposerLabel = 'Un participante';
+
+      final descriptionSnippet = eventDescription != null &&
+              eventDescription.trim().isNotEmpty
+          ? (eventDescription.trim().length > 80
+              ? '${eventDescription.trim().substring(0, 80)}...'
+              : eventDescription.trim())
+          : null;
+      final body = descriptionSnippet != null
+          ? '$proposerLabel propone: $descriptionSnippet'
+          : '$proposerLabel ha propuesto un nuevo evento.';
+
       final notification = NotificationModel(
         userId: organizerUserId,
         type: NotificationType.eventProposed,
-        title: '📅 Propuesta de evento en "$finalPlanName"',
+        title: '📅 $proposerLabel propone un evento en "$finalPlanName"',
         body: body,
         planId: planId,
         eventId: eventId,
         createdAt: DateTime.now(),
-        data: {'source': 'T252'},
+        data: {
+          'source': 'T252',
+          if (proposerUserId != null && proposerUserId.isNotEmpty)
+            'proposerUserId': proposerUserId,
+          'proposerDisplayName': proposerLabel,
+        },
       );
       final id = await _notificationService.createNotification(organizerUserId, notification);
       if (id != null) {

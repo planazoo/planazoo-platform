@@ -1570,6 +1570,10 @@
   "@notificationsMarkAllAsRead": { "description": "Button in global notifications list" },
   "notificationsEmpty": "No notifications",
   "@notificationsEmpty": { "description": "Empty global list" },
+  "notificationOpenEventError": "Could not open the event. It may have been deleted.",
+  "@notificationOpenEventError": { "description": "Tap notification with eventId but event missing" },
+  "notificationOpenEventMissing": "This notification has no linked event.",
+  "@notificationOpenEventMissing": { "description": "eventProposed without eventId" },
   "notificationsGenerateTestData": "Generate test notifications",
   "@notificationsGenerateTestData": { "description": "Button to create test data of all types" },
   "notificationsTestDataGenerated": "Created: {invitations} invitations, {pending} email events, {app} notifications",
@@ -2282,8 +2286,16 @@
   "eventRentalPickupReturnNotesHint": "E.g. fuel, visible damage, mileage, return policy",
   "flightNumberLabel": "Flight number",
   "flightNumberHint": "E.g. IB6842, AF1135",
+  "airlineNameLabel": "Airline",
+  "@airlineNameLabel": { "description": "Airline field on flight event" },
+  "airlineNameHint": "E.g. Iberia, Vueling",
+  "@airlineNameHint": { "description": "Airline field hint" },
+  "flightAirportsSectionLabel": "Airports",
+  "@flightAirportsSectionLabel": { "description": "Airports section under flight/airline" },
   "flightDateLabel": "Flight date",
-  "getFlightDataButton": "Get flight data",
+  "getFlightDataButton": "Autofill with Amadeus",
+  "flightAutofillShort": "Autofill",
+  "@flightAutofillShort": { "description": "Compact link under flight number/airline" },
   "flightNumberRequired": "Enter the flight number (e.g. IB6842).",
   "flightDataLoaded": "Flight data loaded.",
   "eventTabGeneral": "General",
@@ -2452,6 +2464,29 @@
   "eventSponsoredOpenError": "Could not open sponsor link",
   "eventStatusDraft": "Draft",
   "eventStatusConfirmed": "Confirmed",
+  "entityAuthorshipCreatedBy": "Created by {name} · {date}",
+  "@entityAuthorshipCreatedBy": {
+    "description": "Authorship footer on event/accommodation",
+    "placeholders": {
+      "name": { "type": "String" },
+      "date": { "type": "String" }
+    }
+  },
+  "entityAuthorshipProposedBy": "Proposed by {name} · {date}",
+  "@entityAuthorshipProposedBy": {
+    "description": "Authorship footer when event is a participant proposal",
+    "placeholders": {
+      "name": { "type": "String" },
+      "date": { "type": "String" }
+    }
+  },
+  "entityAuthorshipDateOnly": "Created · {date}",
+  "@entityAuthorshipDateOnly": {
+    "description": "Authorship footer without known creator",
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
   "isDraft": "Is draft",
   "@isDraft": {
     "description": "Is draft label"
@@ -2997,6 +3032,42 @@
   "@planMapLoadError": { "description": "T279: JS auth/load failure" },
   "planMapOpenDayRoute": "Day route in Google Maps",
   "@planMapOpenDayRoute": { "description": "T279: open /maps/dir for the day" },
+  "planMapOpenWalkingRoute": "Open Maps · walking segments",
+  "@planMapOpenWalkingRoute": { "description": "T279: Maps walking segments for selected day" },
+  "planMapOpenDrivingRoute": "Open Maps · driving segments",
+  "@planMapOpenDrivingRoute": { "description": "T279: Maps driving segments for selected day" },
+  "planMapOpenRoutePartsTitle": "Several segments",
+  "@planMapOpenRoutePartsTitle": { "description": "T279: sheet when mode has multiple Maps URLs" },
+  "planMapOpenRouteMoreHint": "There are {count} Maps segments. The first one is already open.",
+  "@planMapOpenRouteMoreHint": {
+    "description": "T279: snackbar after opening first of several Maps URLs",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "planMapOpenRoutePartsExplain": "Google Maps allows at most ~10 stops per link. This day opens in {count} segments.",
+  "@planMapOpenRoutePartsExplain": {
+    "description": "T279: explain why day is split into several Maps URLs",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "planMapOpenRoutePartOpened": "Segment {part} of {total} (already open)",
+  "@planMapOpenRoutePartOpened": {
+    "description": "T279: first chunk already launched in Maps",
+    "placeholders": {
+      "part": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "planMapOpenRoutePart": "Segment {part} of {total}",
+  "@planMapOpenRoutePart": {
+    "description": "T279: one Maps URL chunk",
+    "placeholders": {
+      "part": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
   "planMapLegendHotel": "Accommodation",
   "@planMapLegendHotel": { "description": "T279: H pin" },
   "planMapLegendAirport": "Airport",

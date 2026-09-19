@@ -433,15 +433,280 @@ class PlanMapStopBuilder {
     return stops;
   }
 
+  /// Google Maps admite origen + destino + hasta 8 waypoints (10 puntos).
+  static const int maxMapsDirPoints = 10;
+
+  /// Radio (km) para emparejar origen/destino de un desplazamiento con dos pines.
+  static const double _transportMatchKm = 0.85;
+
   /// URL de direcciones Google Maps para las visitas de un día (máx. 10 puntos).
+  /// Por compatibilidad usa `walking` y solo el primer tramo si hay más de 10.
   static String? googleMapsDirUrl(List<PlanMapStop> dayVisits) {
-    final points = _routeStopsForMaps(dayVisits);
-    if (points.isEmpty) return null;
+    final urls = googleMapsDirUrls(
+      dayVisits,
+      mode: PlanMapsTravelMode.walking,
+    );
+    return urls.isEmpty ? null : urls.first;
+  }
+
+  /// URLs de Google Maps para tramos del [mode] en el día representado por [dayStops].
+  ///
+  /// - **driving (prueba):** todos los pines del día con coordenadas, en orden,
+  ///   como una sola ruta `travelmode=driving` (partes si hay >10 puntos).
+  /// - **walking:** visita el itinerario andando; corta solo si hay Coche/Taxi/Caminar
+  ///   con origen→destino cerca de dos pines consecutivos.
+  static List<String> googleMapsDirUrls(
+    List<PlanMapStop> dayStops, {
+    required PlanMapsTravelMode mode,
+    List<Event> events = const [],
+    int? dayIndex,
+  }) {
+    if (mode == PlanMapsTravelMode.driving) {
+      final points = _routeStopsForMaps(dayStops);
+      return _urlsForStops(points, travelMode: 'driving');
+    }
+
+    final segments = dayRouteSegments(
+      dayStops,
+      events: events,
+      dayIndex: dayIndex,
+    ).where((s) => s.mode == mode).toList();
+    final urls = <String>[];
+    for (final segment in segments) {
+      urls.addAll(_urlsForStops(segment.stops, travelMode: segment.travelModeParam));
+    }
+    return urls;
+  }
+
+  /// Segmenta el recorrido del día en tramos walking/driving.
+  static List<PlanMapsRouteSegment> dayRouteSegments(
+    List<PlanMapStop> dayStops, {
+    List<Event> events = const [],
+    int? dayIndex,
+  }) {
+    final points = _routeStopsForMaps(dayStops);
+    if (points.isEmpty) return const [];
+
+    final resolvedDay = dayIndex ??
+        (points.map((p) => p.dayIndex).toSet().length == 1
+            ? points.first.dayIndex
+            : null);
+
+    DateTime? civilDay;
+    if (resolvedDay != null) {
+      for (final s in dayStops) {
+        if (s.dayIndex == resolvedDay) {
+          civilDay = _dayOnly(s.day);
+          break;
+        }
+      }
+    }
+    civilDay ??= points.isNotEmpty ? _dayOnly(points.first.day) : null;
+
+    final dayTransports = events.where((e) {
+      if (!_isTransport(e)) return false;
+      if (civilDay == null) return true;
+      return _dayOnly(_eventStart(e)) == civilDay;
+    }).toList()
+      ..sort((a, b) => _eventStart(a).compareTo(_eventStart(b)));
+
     if (points.length == 1) {
-      final p = points.first;
+      return [
+        PlanMapsRouteSegment(mode: PlanMapsTravelMode.walking, stops: points),
+      ];
+    }
+
+    final edgeModes = <PlanMapsTravelMode>[];
+    for (var i = 0; i < points.length - 1; i++) {
+      edgeModes.add(_edgeTravelMode(points[i], points[i + 1], dayTransports));
+    }
+
+    final segments = <PlanMapsRouteSegment>[];
+    void flush(PlanMapsTravelMode mode, List<PlanMapStop> buf) {
+      if (buf.length >= 2) {
+        segments.add(PlanMapsRouteSegment(mode: mode, stops: List.of(buf)));
+      }
+    }
+
+    for (final target in PlanMapsTravelMode.values) {
+      List<PlanMapStop>? buf;
+      for (var i = 0; i < edgeModes.length; i++) {
+        if (edgeModes[i] == target) {
+          buf ??= [points[i]];
+          final next = points[i + 1];
+          if (buf.last.lat != next.lat || buf.last.lng != next.lng) {
+            buf.add(next);
+          }
+        } else if (buf != null) {
+          flush(target, buf);
+          buf = null;
+        }
+      }
+      if (buf != null) flush(target, buf);
+    }
+
+    // Desplazamientos en coche con O/D propios que no encajan como arista.
+    for (final e in dayTransports) {
+      if (_mapsModeForEvent(e) != PlanMapsTravelMode.driving) continue;
+      final o = _transportOrigin(e);
+      final d = _transportDestination(e);
+      if (o == null || d == null) continue;
+      final already = segments.any((s) {
+        if (s.mode != PlanMapsTravelMode.driving || s.stops.length < 2) {
+          return false;
+        }
+        return _near(s.stops.first.lat!, s.stops.first.lng!, o.lat, o.lng) &&
+            _near(s.stops.last.lat!, s.stops.last.lng!, d.lat, d.lng);
+      });
+      if (already) continue;
+      segments.add(
+        PlanMapsRouteSegment(
+          mode: PlanMapsTravelMode.driving,
+          stops: [
+            PlanMapStop(
+              id: 'drive-o:${e.id ?? e.hashCode}',
+              kind: PlanMapStopKind.place,
+              lat: o.lat,
+              lng: o.lng,
+              title: _firstNonEmpty([
+                e.commonPart?.extraData?['taxiOriginName'],
+                'Origen',
+              ]),
+              day: _dayOnly(_eventStart(e)),
+              dayIndex: resolvedDay ?? 0,
+              colorHex: '#000000',
+              visibleOnDayIndexes: [resolvedDay ?? 0],
+              startAt: _eventStart(e),
+              eventId: e.id,
+            ),
+            PlanMapStop(
+              id: 'drive-d:${e.id ?? e.hashCode}',
+              kind: PlanMapStopKind.place,
+              lat: d.lat,
+              lng: d.lng,
+              title: _firstNonEmpty([
+                e.commonPart?.extraData?['taxiDestinationName'],
+                'Destino',
+              ]),
+              day: _dayOnly(_eventStart(e)),
+              dayIndex: resolvedDay ?? 0,
+              colorHex: '#000000',
+              visibleOnDayIndexes: [resolvedDay ?? 0],
+              startAt: _eventEnd(e),
+              eventId: e.id,
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (segments.isEmpty && points.length >= 2) {
+      // Sin tipado: un solo tramo andando (comportamiento previo).
+      segments.add(
+        PlanMapsRouteSegment(mode: PlanMapsTravelMode.walking, stops: points),
+      );
+    }
+    return segments;
+  }
+
+  static PlanMapsTravelMode? _mapsModeForEvent(Event event) {
+    final sub =
+        (event.commonPart?.subtype ?? event.typeSubtype ?? '').trim();
+    switch (sub) {
+      case 'Caminar':
+        return PlanMapsTravelMode.walking;
+      case 'Coche':
+      case 'Taxi':
+      case 'Recogida vehículo alquiler':
+      case 'Entrega vehículo alquiler':
+        return PlanMapsTravelMode.driving;
+      default:
+        // Avión / tren / bus / shuttle: no van a los botones andando/coche.
+        return null;
+    }
+  }
+
+  static ({double lat, double lng})? _transportOrigin(Event event) {
+    final extra = _extraOf(event);
+    // Solo origen explícito de Desplazamiento (no placeLat del evento).
+    return _namedCoords(extra, latKey: 'taxiOriginLat', lngKey: 'taxiOriginLng');
+  }
+
+  static ({double lat, double lng})? _transportDestination(Event event) {
+    final extra = _extraOf(event);
+    return _namedCoords(
+      extra,
+      latKey: 'taxiDestinationLat',
+      lngKey: 'taxiDestinationLng',
+    );
+  }
+
+  static bool _near(double lat1, double lng1, double lat2, double lng2) =>
+      _distanceKm(lat1, lng1, lat2, lng2) <= _transportMatchKm;
+
+  /// Modo de la arista entre dos pines.
+  /// Solo corta el itinerario si hay Coche/Taxi/Caminar con origen→destino
+  /// cerca de esos dos pines (no por hora suelta: eso partía el día en pares).
+  static PlanMapsTravelMode _edgeTravelMode(
+    PlanMapStop a,
+    PlanMapStop b,
+    List<Event> dayTransports,
+  ) {
+    if (!a.hasPosition || !b.hasPosition) {
+      return PlanMapsTravelMode.walking;
+    }
+    for (final e in dayTransports) {
+      final mode = _mapsModeForEvent(e);
+      if (mode == null) continue;
+      final o = _transportOrigin(e);
+      final d = _transportDestination(e);
+      if (o == null || d == null) continue;
+      if (_near(o.lat, o.lng, a.lat!, a.lng!) &&
+          _near(d.lat, d.lng, b.lat!, b.lng!)) {
+        return mode;
+      }
+    }
+    return PlanMapsTravelMode.walking;
+  }
+
+  static List<String> _urlsForStops(
+    List<PlanMapStop> points, {
+    required String travelMode,
+  }) {
+    final withPos = points.where((p) => p.hasPosition).toList();
+    if (withPos.isEmpty) return const [];
+    if (withPos.length == 1) {
+      final p = withPos.first;
+      return ['https://www.google.com/maps?q=${p.lat},${p.lng}'];
+    }
+    final urls = <String>[];
+    var start = 0;
+    while (start < withPos.length) {
+      final remaining = withPos.length - start;
+      // Tras un solape, un único punto suelto ya era el destino del tramo anterior.
+      if (remaining == 1 && urls.isNotEmpty) break;
+      final take = remaining <= maxMapsDirPoints
+          ? remaining
+          : maxMapsDirPoints;
+      final chunk = withPos.sublist(start, start + take);
+      final url = _dirUrlForChunk(chunk, travelMode: travelMode);
+      if (url != null) urls.add(url);
+      if (start + take >= withPos.length) break;
+      // Solape de 1 punto para encadenar partes.
+      start += take - 1;
+    }
+    return urls;
+  }
+
+  static String? _dirUrlForChunk(
+    List<PlanMapStop> limited, {
+    required String travelMode,
+  }) {
+    if (limited.isEmpty) return null;
+    if (limited.length == 1) {
+      final p = limited.first;
       return 'https://www.google.com/maps?q=${p.lat},${p.lng}';
     }
-    final limited = points.length > 10 ? points.sublist(0, 10) : points;
     final origin = '${limited.first.lat},${limited.first.lng}';
     final destination = '${limited.last.lat},${limited.last.lng}';
     final waypoints = limited.length <= 2
@@ -454,7 +719,7 @@ class PlanMapStopBuilder {
       'api': '1',
       'origin': origin,
       'destination': destination,
-      'travelmode': 'walking',
+      'travelmode': travelMode,
     };
     if (waypoints.isNotEmpty) {
       params['waypoints'] = waypoints;

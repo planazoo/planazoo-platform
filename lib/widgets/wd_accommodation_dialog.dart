@@ -4,6 +4,7 @@ import 'package:unp_calendario/features/calendar/domain/models/accommodation.dar
 import 'package:unp_calendario/features/calendar/domain/models/event.dart' show EventDocument;
 import 'package:unp_calendario/features/calendar/domain/services/plan_file_service.dart';
 import 'package:unp_calendario/widgets/plan/entity_attachments_section.dart';
+import 'package:unp_calendario/widgets/plan/entity_authorship_section.dart';
 import 'package:unp_calendario/widgets/plan/entity_communications_section.dart';
 import 'package:unp_calendario/widgets/plan/reservation_cancellation_form_section.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
@@ -79,6 +80,10 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   late List<String> _selectedParticipantTrackIds;
   late bool _isForAllParticipants; // Checkbox principal "Para todos"
   late bool _isDraft; // Borrador / Confirmado (igual que eventos)
+  bool _canEditGeneral = true;
+  bool _isOrganizer = false;
+  bool _isObserver = false;
+  bool _permissionsReady = false;
 
   // Colores predefinidos para alojamientos
   final List<String> _accommodationColors = [
@@ -170,8 +175,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     // Si es un alojamiento existente y no está marcado "para todos" pero no hay participantes,
     // asegurar que al menos haya uno seleccionado (se validará al guardar)
     
-    // Cargar moneda del plan (T153)
+    // Cargar moneda del plan (T153) y permisos de edición
     _loadPlanCurrency();
+    _applyAccommodationEditPermissions();
 
     _accommodationDocuments = List<EventDocument>.from(widget.accommodation?.documents ?? const []);
 
@@ -194,6 +200,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
           _costCurrency ??= plan.currency;
           _plan = plan; // T109: Guardar plan para verificar estado
         });
+        await _applyAccommodationEditPermissions();
       }
     } catch (e) {
       if (mounted) {
@@ -204,11 +211,71 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       }
     }
   }
-  
+
+  /// Misma matriz que eventos: organizador cualquier; creador el suyo;
+  /// participante creando → propuesta; observador → solo lectura.
+  Future<void> _applyAccommodationEditPermissions() async {
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser?.id == null) {
+      if (mounted) {
+        setState(() {
+          _canEditGeneral = false;
+          _permissionsReady = true;
+        });
+      }
+      return;
+    }
+
+    final participation = await ref
+        .read(planParticipationServiceProvider)
+        .getParticipation(widget.planId, currentUser!.id);
+
+    Plan? plan = _plan;
+    if (plan == null) {
+      plan = await ref.read(planServiceProvider).getPlanById(widget.planId);
+      if (plan != null) _plan = plan;
+    }
+
+    final isPlanOwner = plan?.userId == currentUser.id;
+    final isOrganizer =
+        isPlanOwner || (participation?.isOrganizer ?? false);
+    final isObserver = !isOrganizer && (participation?.isObserver ?? false);
+    final isCreating = widget.accommodation == null;
+    final creatorId = widget.accommodation?.createdByUserId;
+    final isOwner =
+        creatorId != null && creatorId.isNotEmpty && creatorId == currentUser.id;
+
+    final bool canEditGeneral;
+    if (isObserver) {
+      canEditGeneral = false;
+    } else if (isOrganizer) {
+      canEditGeneral = true;
+    } else if (isCreating) {
+      canEditGeneral = true;
+    } else {
+      // Sin createdByUserId legacy: solo organizador (ya cubierto arriba).
+      canEditGeneral = isOwner;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _isOrganizer = isOrganizer;
+      _isObserver = isObserver;
+      _canEditGeneral = canEditGeneral;
+      if (isCreating && !isOrganizer && !isObserver) {
+        _isDraft = true;
+      }
+      _permissionsReady = true;
+    });
+  }
+
+  bool get _isParticipantCreatingProposal =>
+      widget.accommodation == null && !_isOrganizer && !_isObserver;
+
   /// T109: Verifica si se puede guardar/crear el alojamiento según el estado del plan
   bool _canSaveAccommodation() {
     if (_plan == null) return true; // Si no hay plan cargado, permitir por defecto
-    
+
     if (widget.accommodation == null) {
       // Crear alojamiento nuevo
       return PlanStatePermissions.canAddEvents(_plan!);
@@ -218,7 +285,8 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     }
   }
 
-  bool get _canEdit => _canSaveAccommodation();
+  bool get _canEdit =>
+      _canEditGeneral && (!_permissionsReady || _canSaveAccommodation());
 
   Widget _wrapReadOnlyIfNeeded({required Widget child}) {
     if (_canEdit) return child;
@@ -416,7 +484,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             IosHeroChipData(
               status,
               color: statusColor,
-              onTap: canEdit ? _pickAccommodationStatus : null,
+              onTap: (!_isParticipantCreatingProposal && canEdit)
+                  ? _pickAccommodationStatus
+                  : null,
             ),
           ],
         ),
@@ -484,6 +554,14 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         ],
         const SizedBox(height: spacing),
         _wrapReadOnlyIfNeeded(child: _buildColorSelectorRow(loc, canEdit)),
+        if (widget.accommodation != null) ...[
+          const SizedBox(height: spacing),
+          EntityAuthorshipSection(
+            createdAt: widget.accommodation!.createdAt,
+            createdByUserId: widget.accommodation!.createdByUserId,
+            planId: widget.planId,
+          ),
+        ],
         if (_canDeleteAccommodation() && canEdit) ...[
           const SizedBox(height: IosFormColors.cardGap),
           IosDestructiveTile(
@@ -1970,6 +2048,18 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
 
   Future<bool> _saveAccommodation() async {
     final loc = AppLocalizations.of(context)!;
+    if (!_canEditGeneral) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(loc.eventReadOnlySnackBar),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      return false;
+    }
     if (!_canSaveAccommodation() && _plan != null) {
       final action =
           widget.accommodation == null ? 'create_event' : 'modify_event';
@@ -2115,6 +2205,8 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       final url =
           _urlController.text.trim().isEmpty ? null : _urlController.text.trim();
       final selectedParticipantIds = _selectedParticipantTrackIds.toSet().toList();
+      final effectiveIsDraft =
+          _isParticipantCreatingProposal ? true : _isDraft;
       final commonPart = AccommodationCommonPart(
         hotelName: hotelName,
         checkIn: _selectedCheckIn,
@@ -2128,7 +2220,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         participantIds: _isForAllParticipants ? [] : selectedParticipantIds,
         isForAllParticipants: _isForAllParticipants,
         extraData: baseExtra.isEmpty ? null : baseExtra,
-        isDraft: _isDraft,
+        isDraft: effectiveIsDraft,
       );
 
       Map<String, AccommodationPersonalPart>? personalParts;
@@ -2166,6 +2258,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         );
       }
 
+      final currentUserId = ref.read(currentUserProvider)?.id;
       final accommodation = Accommodation(
         id: widget.accommodation?.id,
         planId: widget.planId,
@@ -2181,12 +2274,13 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         cost: costValue,
         createdAt: widget.accommodation?.createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
+        createdByUserId: widget.accommodation?.createdByUserId ?? currentUserId,
         commonPart: commonPart,
         personalParts: personalParts,
         documents: _accommodationDocuments.isEmpty
             ? null
             : List<EventDocument>.from(_accommodationDocuments),
-        isDraft: _isDraft,
+        isDraft: effectiveIsDraft,
         reservationCancellation: _reservationSectionKey.currentState?.toModel(),
       );
 

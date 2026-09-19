@@ -1689,6 +1689,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationsEmpty => 'No notifications';
 
   @override
+  String get notificationOpenEventError =>
+      'Could not open the event. It may have been deleted.';
+
+  @override
+  String get notificationOpenEventMissing =>
+      'This notification has no linked event.';
+
+  @override
   String get notificationsGenerateTestData => 'Generate test notifications';
 
   @override
@@ -2682,10 +2690,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get flightNumberHint => 'E.g. IB6842, AF1135';
 
   @override
+  String get airlineNameLabel => 'Airline';
+
+  @override
+  String get airlineNameHint => 'E.g. Iberia, Vueling';
+
+  @override
+  String get flightAirportsSectionLabel => 'Airports';
+
+  @override
   String get flightDateLabel => 'Flight date';
 
   @override
-  String get getFlightDataButton => 'Get flight data';
+  String get getFlightDataButton => 'Autofill with Amadeus';
+
+  @override
+  String get flightAutofillShort => 'Autofill';
 
   @override
   String get flightNumberRequired => 'Enter the flight number (e.g. IB6842).';
@@ -2914,6 +2934,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventStatusConfirmed => 'Confirmed';
+
+  @override
+  String entityAuthorshipCreatedBy(String name, String date) {
+    return 'Created by $name · $date';
+  }
+
+  @override
+  String entityAuthorshipProposedBy(String name, String date) {
+    return 'Proposed by $name · $date';
+  }
+
+  @override
+  String entityAuthorshipDateOnly(String date) {
+    return 'Created · $date';
+  }
 
   @override
   String get isDraft => 'Is draft';
@@ -3526,6 +3561,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planMapOpenDayRoute => 'Day route in Google Maps';
+
+  @override
+  String get planMapOpenWalkingRoute => 'Open Maps · walking segments';
+
+  @override
+  String get planMapOpenDrivingRoute => 'Open Maps · driving segments';
+
+  @override
+  String get planMapOpenRoutePartsTitle => 'Several segments';
+
+  @override
+  String planMapOpenRouteMoreHint(int count) {
+    return 'There are $count Maps segments. The first one is already open.';
+  }
+
+  @override
+  String planMapOpenRoutePartsExplain(int count) {
+    return 'Google Maps allows at most ~10 stops per link. This day opens in $count segments.';
+  }
+
+  @override
+  String planMapOpenRoutePartOpened(int part, int total) {
+    return 'Segment $part of $total (already open)';
+  }
+
+  @override
+  String planMapOpenRoutePart(int part, int total) {
+    return 'Segment $part of $total';
+  }
 
   @override
   String get planMapLegendHotel => 'Accommodation';

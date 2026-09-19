@@ -3140,6 +3140,18 @@ abstract class AppLocalizations {
   /// **'No hay notificaciones'**
   String get notificationsEmpty;
 
+  /// Tap notification with eventId but event missing
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo abrir el evento. Puede que se haya eliminado.'**
+  String get notificationOpenEventError;
+
+  /// eventProposed without eventId
+  ///
+  /// In es, this message translates to:
+  /// **'Esta notificación no tiene un evento vinculado.'**
+  String get notificationOpenEventMissing;
+
   /// Botón para crear datos de prueba de todos los tipos
   ///
   /// In es, this message translates to:
@@ -4886,6 +4898,24 @@ abstract class AppLocalizations {
   /// **'Ej: IB6842, AF1135'**
   String get flightNumberHint;
 
+  /// Campo aerolínea en evento Avión
+  ///
+  /// In es, this message translates to:
+  /// **'Compañía aérea'**
+  String get airlineNameLabel;
+
+  /// Hint compañía aérea
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Iberia, Vueling'**
+  String get airlineNameHint;
+
+  /// Sección aeropuertos debajo de vuelo/compañía
+  ///
+  /// In es, this message translates to:
+  /// **'Aeropuertos'**
+  String get flightAirportsSectionLabel;
+
   /// No description provided for @flightDateLabel.
   ///
   /// In es, this message translates to:
@@ -4895,8 +4925,14 @@ abstract class AppLocalizations {
   /// No description provided for @getFlightDataButton.
   ///
   /// In es, this message translates to:
-  /// **'Obtener datos del vuelo'**
+  /// **'Autocompletar con Amadeus'**
   String get getFlightDataButton;
+
+  /// Enlace compacto bajo nº vuelo/compañía
+  ///
+  /// In es, this message translates to:
+  /// **'Autocompletar'**
+  String get flightAutofillShort;
 
   /// No description provided for @flightNumberRequired.
   ///
@@ -5311,6 +5347,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Confirmado'**
   String get eventStatusConfirmed;
+
+  /// Pie de autoría en evento/alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Creado por {name} · {date}'**
+  String entityAuthorshipCreatedBy(String name, String date);
+
+  /// Pie de autoría cuando el evento es propuesta/borrador de participante
+  ///
+  /// In es, this message translates to:
+  /// **'Propuesto por {name} · {date}'**
+  String entityAuthorshipProposedBy(String name, String date);
+
+  /// Pie de autoría sin creador conocido
+  ///
+  /// In es, this message translates to:
+  /// **'Creado · {date}'**
+  String entityAuthorshipDateOnly(String date);
 
   /// Label de es borrador
   ///
@@ -6451,6 +6505,48 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ruta del día en Google Maps'**
   String get planMapOpenDayRoute;
+
+  /// T279: Maps walking segments for selected day
+  ///
+  /// In es, this message translates to:
+  /// **'Abrir Maps · tramos andando'**
+  String get planMapOpenWalkingRoute;
+
+  /// T279: Maps driving segments for selected day
+  ///
+  /// In es, this message translates to:
+  /// **'Abrir Maps · tramos en coche'**
+  String get planMapOpenDrivingRoute;
+
+  /// T279: sheet when mode has multiple Maps URLs
+  ///
+  /// In es, this message translates to:
+  /// **'Varios tramos'**
+  String get planMapOpenRoutePartsTitle;
+
+  /// T279: snackbar after opening first of several Maps URLs
+  ///
+  /// In es, this message translates to:
+  /// **'Hay {count} tramos en Maps. El primero ya está abierto.'**
+  String planMapOpenRouteMoreHint(int count);
+
+  /// T279: explain why day is split into several Maps URLs
+  ///
+  /// In es, this message translates to:
+  /// **'Google Maps admite como máximo ~10 paradas por enlace. Este día se abre en {count} tramos.'**
+  String planMapOpenRoutePartsExplain(int count);
+
+  /// T279: first chunk already launched in Maps
+  ///
+  /// In es, this message translates to:
+  /// **'Tramo {part} de {total} (ya abierto)'**
+  String planMapOpenRoutePartOpened(int part, int total);
+
+  /// T279: one Maps URL chunk
+  ///
+  /// In es, this message translates to:
+  /// **'Tramo {part} de {total}'**
+  String planMapOpenRoutePart(int part, int total);
 
   /// T279: pin H
   ///
