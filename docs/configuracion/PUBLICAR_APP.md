@@ -59,7 +59,7 @@ No publicar con analyzer en rojo ni con tests rotos del cambio.
 
 ## 3. Versión (iOS / TestFlight)
 
-En `pubspec.yaml`, `version` es `x.y.z+build` (hoy: `1.0.0+10`).
+En `pubspec.yaml`, `version` es `x.y.z+build` (hoy: `1.0.0+11`).
 
 - Cada subida a TestFlight necesita un **`+build` nuevo**.
 - Si solo se publica web, el bump es opcional.
