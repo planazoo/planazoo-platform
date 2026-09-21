@@ -480,6 +480,60 @@
   },
   "paymentsExpenseSplitBetween": "Split between",
   "paymentsActivityTitle": "Activity",
+  "paymentsTabBalances": "Balances",
+  "@paymentsTabBalances": {
+    "description": "Short Payments tab label (mobile)"
+  },
+  "paymentsTabTransfers": "Transfers",
+  "@paymentsTabTransfers": {
+    "description": "Short Payments tab label (mobile)"
+  },
+  "paymentsExpensesListButton": "Expense list",
+  "@paymentsExpensesListButton": {},
+  "paymentsExpensesListTitle": "Expense list",
+  "@paymentsExpensesListTitle": {},
+  "paymentsExpensesListEmpty": "No expenses or guarantees recorded yet.",
+  "@paymentsExpensesListEmpty": {},
+  "paymentsExpensesExportMenu": "Export",
+  "@paymentsExpensesExportMenu": {},
+  "paymentsExpensesExportText": "Copy as text",
+  "@paymentsExpensesExportText": {},
+  "paymentsExpensesExportCsv": "Copy as CSV",
+  "@paymentsExpensesExportCsv": {},
+  "paymentsExpensesExportCopied": "Copied to clipboard",
+  "@paymentsExpensesExportCopied": {},
+  "paymentsExpensesExportEmpty": "Nothing to export",
+  "@paymentsExpensesExportEmpty": {},
+  "paymentsSettlementExportButton": "Export full settlement",
+  "@paymentsSettlementExportButton": {},
+  "paymentsSettlementExportCopied": "Settlement copied to clipboard",
+  "@paymentsSettlementExportCopied": {},
+  "paymentsSettlementExportNoTransfers": "(no transfer suggestions)",
+  "@paymentsSettlementExportNoTransfers": {},
+  "paymentsGuaranteeListConcept": "Reservation guarantee",
+  "@paymentsGuaranteeListConcept": {},
+  "paymentsOpenLinkedEvent": "Open event",
+  "@paymentsOpenLinkedEvent": {},
+  "paymentsOpenLinkedAccommodation": "Open accommodation",
+  "@paymentsOpenLinkedAccommodation": {},
+  "paymentsGuaranteeSplitLabel": "Guarantee · equal split · {count} people",
+  "@paymentsGuaranteeSplitLabel": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "paymentsExpenseSplitSummaryEqual": "Equal split · {count} people",
+  "@paymentsExpenseSplitSummaryEqual": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "paymentsExpenseSplitSummaryCustom": "Custom split · {count} people",
+  "@paymentsExpenseSplitSummaryCustom": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "paymentsExpenseSaved": "Expense recorded",
   "paymentsExpenseSaveError": "Error saving expense",
   "paymentsExpenseSplitEqual": "Equal split",
@@ -2337,6 +2391,10 @@
   "eventPaymentsSaveFirst": "Save the event to record linked expenses.",
   "eventPaymentsBudgetLabel": "Planned cost (General)",
   "eventPaymentsBudgetFooter": "Budget reference only; does not replace a split expense.",
+  "eventPaymentsOpenAddExpense": "Add expense (who paid and split)",
+  "@eventPaymentsOpenAddExpense": {
+    "description": "Row on event General tab that jumps to Payments tab"
+  },
   "eventPaymentsSectionExpenses": "Expenses for this event",
   "eventPaymentsEmpty": "No expenses linked to this event.",
   "eventPaymentsRecordedTotal": "Total recorded: {amount}",
@@ -3297,6 +3355,22 @@
   "snackInviteSendError": "Could not send invitation: {error}",
   "@snackInviteSendError": { "placeholders": { "error": { "type": "String" } } },
   "inviteByEmailTitle": "Invite by email",
+  "participantsTabInvite": "Invite",
+  "@participantsTabInvite": {
+    "description": "Short tab on Participants screen"
+  },
+  "participantsTabInvitations": "Invitations",
+  "@participantsTabInvitations": {
+    "description": "Short tab on Participants screen"
+  },
+  "participantsInvitationsEmpty": "No invitations for this plan yet.",
+  "@participantsInvitationsEmpty": {},
+  "participantsInviteSectionTitle": "Invite",
+  "@participantsInviteSectionTitle": {},
+  "participantsInviteByEmailRow": "By email",
+  "@participantsInviteByEmailRow": {},
+  "participantsSearchUsersHint": "Search users",
+  "@participantsSearchUsersHint": {},
   "invitePendingExistsForEmail": "There is already a pending invitation for {email}.\n\nWhat would you like to do?",
   "@invitePendingExistsForEmail": { "placeholders": { "email": { "type": "String" } } },
   "roleFieldLabel": "Role",

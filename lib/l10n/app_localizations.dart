@@ -830,6 +830,120 @@ abstract class AppLocalizations {
   /// **'Actividad'**
   String get paymentsActivityTitle;
 
+  /// Pestaña corta Pagos (móvil)
+  ///
+  /// In es, this message translates to:
+  /// **'Balances'**
+  String get paymentsTabBalances;
+
+  /// Pestaña corta Pagos (móvil)
+  ///
+  /// In es, this message translates to:
+  /// **'Transferencias'**
+  String get paymentsTabTransfers;
+
+  /// No description provided for @paymentsExpensesListButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Lista de gastos'**
+  String get paymentsExpensesListButton;
+
+  /// No description provided for @paymentsExpensesListTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Lista de gastos'**
+  String get paymentsExpensesListTitle;
+
+  /// No description provided for @paymentsExpensesListEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay gastos ni garantías registrados todavía.'**
+  String get paymentsExpensesListEmpty;
+
+  /// No description provided for @paymentsExpensesExportMenu.
+  ///
+  /// In es, this message translates to:
+  /// **'Exportar'**
+  String get paymentsExpensesExportMenu;
+
+  /// No description provided for @paymentsExpensesExportText.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiar como texto'**
+  String get paymentsExpensesExportText;
+
+  /// No description provided for @paymentsExpensesExportCsv.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiar como CSV'**
+  String get paymentsExpensesExportCsv;
+
+  /// No description provided for @paymentsExpensesExportCopied.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiado al portapapeles'**
+  String get paymentsExpensesExportCopied;
+
+  /// No description provided for @paymentsExpensesExportEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay nada que exportar'**
+  String get paymentsExpensesExportEmpty;
+
+  /// No description provided for @paymentsSettlementExportButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Exportar cuadre completo'**
+  String get paymentsSettlementExportButton;
+
+  /// No description provided for @paymentsSettlementExportCopied.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuadre copiado al portapapeles'**
+  String get paymentsSettlementExportCopied;
+
+  /// No description provided for @paymentsSettlementExportNoTransfers.
+  ///
+  /// In es, this message translates to:
+  /// **'(sin sugerencias de transferencia)'**
+  String get paymentsSettlementExportNoTransfers;
+
+  /// No description provided for @paymentsGuaranteeListConcept.
+  ///
+  /// In es, this message translates to:
+  /// **'Garantía de reserva'**
+  String get paymentsGuaranteeListConcept;
+
+  /// No description provided for @paymentsOpenLinkedEvent.
+  ///
+  /// In es, this message translates to:
+  /// **'Abrir evento'**
+  String get paymentsOpenLinkedEvent;
+
+  /// No description provided for @paymentsOpenLinkedAccommodation.
+  ///
+  /// In es, this message translates to:
+  /// **'Abrir alojamiento'**
+  String get paymentsOpenLinkedAccommodation;
+
+  /// No description provided for @paymentsGuaranteeSplitLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Garantía · reparto igual · {count} personas'**
+  String paymentsGuaranteeSplitLabel(int count);
+
+  /// No description provided for @paymentsExpenseSplitSummaryEqual.
+  ///
+  /// In es, this message translates to:
+  /// **'Reparto igual · {count} personas'**
+  String paymentsExpenseSplitSummaryEqual(int count);
+
+  /// No description provided for @paymentsExpenseSplitSummaryCustom.
+  ///
+  /// In es, this message translates to:
+  /// **'Reparto personalizado · {count} personas'**
+  String paymentsExpenseSplitSummaryCustom(int count);
+
   /// No description provided for @paymentsExpenseSaved.
   ///
   /// In es, this message translates to:
@@ -5036,6 +5150,12 @@ abstract class AppLocalizations {
   /// **'Referencia del presupuesto; no sustituye un gasto repartido.'**
   String get eventPaymentsBudgetFooter;
 
+  /// Fila en General del evento que lleva a la pestaña Pagos
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir gasto (quién pagó y reparto)'**
+  String get eventPaymentsOpenAddExpense;
+
   /// No description provided for @eventPaymentsSectionExpenses.
   ///
   /// In es, this message translates to:
@@ -7550,6 +7670,42 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Invitar por email'**
   String get inviteByEmailTitle;
+
+  /// Pestaña corta pantalla Participantes
+  ///
+  /// In es, this message translates to:
+  /// **'Invitar'**
+  String get participantsTabInvite;
+
+  /// Pestaña corta pantalla Participantes
+  ///
+  /// In es, this message translates to:
+  /// **'Invitaciones'**
+  String get participantsTabInvitations;
+
+  /// No description provided for @participantsInvitationsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay invitaciones de este plan.'**
+  String get participantsInvitationsEmpty;
+
+  /// No description provided for @participantsInviteSectionTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitar'**
+  String get participantsInviteSectionTitle;
+
+  /// No description provided for @participantsInviteByEmailRow.
+  ///
+  /// In es, this message translates to:
+  /// **'Por email'**
+  String get participantsInviteByEmailRow;
+
+  /// No description provided for @participantsSearchUsersHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar usuarios'**
+  String get participantsSearchUsersHint;
 
   /// No description provided for @invitePendingExistsForEmail.
   ///

@@ -3562,10 +3562,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   }
 
   Widget _buildPaymentsTabScroll(bool isMobile) {
+    final costFromForm = double.tryParse(
+      _costController.text.trim().replaceAll(',', '.'),
+    );
     return EventPaymentsTab(
       plan: _plan,
       eventId: widget.event?.id,
-      budgetCost: widget.event?.cost,
+      budgetCost: costFromForm ?? widget.event?.cost,
       planCurrency: _planCurrency ?? 'EUR',
       isMobile: isMobile,
     );
@@ -4476,6 +4479,23 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             _costCurrency != _planCurrency &&
             _costController.text.trim().isNotEmpty)
           _buildCostConversionHint(),
+        if (widget.event?.id != null) ...[
+          const SizedBox(height: IosFormColors.cardGap),
+          IosGroupedCard(
+            children: [
+              IosSettingsRow(
+                label: loc.eventPaymentsOpenAddExpense,
+                value: '',
+                chevron: true,
+                onTap: () {
+                  final tabController = DefaultTabController.maybeOf(context);
+                  tabController?.animateTo(2);
+                },
+              ),
+            ],
+          ),
+          IosFormFooter(loc.eventPaymentsBudgetFooter),
+        ],
       ],
     );
   }

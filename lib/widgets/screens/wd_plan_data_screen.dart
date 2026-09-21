@@ -25,7 +25,6 @@ import 'package:unp_calendario/features/notifications/domain/services/notificati
 import 'package:unp_calendario/widgets/plan/membership_solo_items_warning.dart';
 import 'package:unp_calendario/widgets/plan/upcoming_cancellations_section.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
-import 'package:unp_calendario/widgets/plan/wd_participants_list_widget.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
@@ -44,7 +43,6 @@ import 'package:unp_calendario/features/calendar/domain/models/event.dart'
 class PlanDataScreen extends ConsumerStatefulWidget {
   final Plan plan;
   final VoidCallback? onPlanDeleted;
-  final VoidCallback? onManageParticipants;
 
   /// Si se proporciona, el botón resumen abre la página de resumen en lugar del diálogo.
   final VoidCallback? onOpenSummary;
@@ -67,7 +65,6 @@ class PlanDataScreen extends ConsumerStatefulWidget {
     super.key,
     required this.plan,
     this.onPlanDeleted,
-    this.onManageParticipants,
     this.onOpenSummary,
     this.onOpenPlanNotes,
     this.onOpenPlanStats,
@@ -122,8 +119,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   List<PlanAttachment> _planAttachments = [];
   String? _formEventAccentBaseColor;
   late Map<String, String> _formEventTypeAccentColors;
-  // P12: secciones Info colapsables (Participantes / Avisos / Meta / Eliminar plan)
-  bool _infoSectionParticipantsExpanded = false;
+  // P12: secciones Info colapsables (Avisos / Meta / Eliminar plan)
   bool _infoSectionAnnouncementsExpanded = false;
   bool _infoSectionMetaExpanded = false;
   bool _infoSectionDangerExpanded = false;
@@ -136,7 +132,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   bool get _isEditing => _canEditPlanDetails;
   bool _viewNotesExpanded = false;
 
-  final GlobalKey _participantsSectionKey = GlobalKey();
   final ScrollController _infoScrollController = ScrollController();
 
   static const Color _cPageBg = IosFormColors.pageBg;
@@ -557,116 +552,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     }
   }
 
-  Widget _buildParticipantsSection(
-    AppLocalizations loc,
-    AsyncValue<List<PlanParticipation>> participantsAsync, {
-    required int participantsCount,
-    bool isCompact = false,
-  }) {
-    if (currentPlan.id == null) {
-      return const SizedBox.shrink();
-    }
-
-    final countLabel = participantsCount > 0 ? '$participantsCount' : null;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        participantsAsync.when(
-          data: (participants) {
-            return IosGroupedCard(
-              children: [
-                IosCollapsibleHeader(
-                  title: loc.planDetailsParticipantsTitle,
-                  subtitle: countLabel,
-                  expanded: _infoSectionParticipantsExpanded,
-                  onToggle: () => setState(() =>
-                      _infoSectionParticipantsExpanded =
-                          !_infoSectionParticipantsExpanded),
-                  trailing: HelpIconButton(
-                    helpId: HelpContextIds.planDetailsParticipants,
-                    contextLabel: loc.planDetailsParticipantsTitle,
-                    defaultBody: loc.planDetailsParticipantsHelp,
-                    compact: true,
-                  ),
-                ),
-                if (_infoSectionParticipantsExpanded) ...[
-                  const IosRowSeparator(),
-                  if (widget.onManageParticipants != null) ...[
-                    IosSettingsRow(
-                      label: loc.planDetailsParticipantsManageLink,
-                      value: '',
-                      valueColor: IosFormColors.accent,
-                      chevron: true,
-                      onTap: widget.onManageParticipants,
-                    ),
-                    const IosRowSeparator(),
-                  ],
-                  if (participants.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: IosFormColors.rowPaddingH,
-                        vertical: IosFormColors.rowPaddingV,
-                      ),
-                      child: Text(
-                        loc.planDetailsNoParticipants,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: IosFormColors.textSecondary,
-                        ),
-                      ),
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: IosFormColors.rowPaddingV,
-                      ),
-                      child: ParticipantsListWidget(
-                        planId: currentPlan.id!,
-                        showActions: false,
-                        compact: isCompact,
-                      ),
-                    ),
-                ],
-              ],
-            );
-          },
-          loading: () => const IosGroupedCard(
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 28),
-                child: Center(
-                  child: SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: IosFormColors.textSecondary,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-      error: (error, stackTrace) => IosGroupedCard(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            child: Text(
-              loc.planDetailsParticipantsLoadError('$error'),
-              style: const TextStyle(
-                fontSize: 15,
-                color: IosFormColors.danger,
-              ),
-            ),
-          ),
-        ],
-      ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -674,13 +559,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     final allParticipantsAsync = currentPlan.id != null
         ? ref.watch(planParticipantsProvider(currentPlan.id!))
         : const AsyncValue<List<PlanParticipation>>.data(<PlanParticipation>[]);
-    final participantsAsync = currentPlan.id != null
-        ? ref.watch(planRealParticipantsProvider(currentPlan.id!))
-        : const AsyncValue<List<PlanParticipation>>.data(<PlanParticipation>[]);
-    final participantsCount = participantsAsync.maybeWhen(
-      data: (list) => list.length,
-      orElse: () => 0,
-    );
     final canManagePlanAttachments = allParticipantsAsync.maybeWhen(
       data: (participants) {
         if (currentUser == null) return false;
@@ -717,20 +595,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       );
     }
 
-    void scrollToParticipants() {
-      setState(() => _infoSectionParticipantsExpanded = true);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final ctx = _participantsSectionKey.currentContext;
-        if (ctx == null) return;
-        Scrollable.ensureVisible(
-          ctx,
-          duration: const Duration(milliseconds: 320),
-          curve: Curves.easeOutCubic,
-          alignment: 0.08,
-        );
-      });
-    }
-
     Widget buildBody() {
       final horizontalPadding = isCompact ? 16.0 : 20.0;
       final verticalPadding = isCompact ? 8.0 : 16.0;
@@ -745,11 +609,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           stateTransitions.isNotEmpty &&
           !widget.forceReadOnly;
       final heroChips = <IosHeroChipData>[
-        if (participantsCount > 0)
-          IosHeroChipData(
-            loc.planDetailsParticipantsChip(participantsCount),
-            onTap: scrollToParticipants,
-          ),
         IosHeroChipData(
           stateLabel,
           color: stateColor,
@@ -848,16 +707,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                     planId: currentPlan.id!,
                     isCompact: isCompact,
                   ),
-                if (currentPlan.id != null)
-                  KeyedSubtree(
-                    key: _participantsSectionKey,
-                    child: _buildParticipantsSection(
-                      loc,
-                      participantsAsync,
-                      participantsCount: participantsCount,
-                      isCompact: isCompact,
-                    ),
-                  ),
                 if (isOrganizer && !widget.forceReadOnly) ...[
                   _buildEventColorsSection(loc, isCompact: isCompact),
                   _buildAnnouncementsSection(isCompact: isCompact),
@@ -935,14 +784,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                       onPressed: _handleExitRequest,
                     )
                   : null,
-              actions: [
-                if (widget.onManageParticipants != null)
-                  IconButton(
-                    icon: const Icon(Icons.group_outlined),
-                    tooltip: loc.planDetailsParticipantsTitle,
-                    onPressed: widget.onManageParticipants,
-                  ),
-              ],
             ),
             backgroundColor: _pageBackground,
             body: body,

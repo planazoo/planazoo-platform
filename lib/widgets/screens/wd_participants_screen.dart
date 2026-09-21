@@ -19,6 +19,7 @@ import 'package:unp_calendario/features/notifications/domain/services/notificati
 import 'package:unp_calendario/widgets/plan/membership_solo_items_warning.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_user_status_label.dart';
 import 'package:unp_calendario/widgets/plan/plan_status_chip_actions.dart';
+import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 
 class ParticipantsScreen extends ConsumerStatefulWidget {
   final Plan plan;
@@ -41,48 +42,20 @@ class ParticipantsScreen extends ConsumerStatefulWidget {
 }
 
 class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
-  static const Color _webPageBg = Color(0xFF111827);
+  static const Color _webPageBg = IosFormColors.pageBg;
   static const Color _webBorder = Color(0x1FFFFFFF);
   static const Color _webOnSurface = Colors.white;
   static const Color _webMuted = Colors.white70;
 
-  /// Tarjeta lista participantes: oscura en móvil, clara en web (W13).
+  /// Tarjeta lista participantes (secciones legacy pendientes / mis invitaciones).
   BoxDecoration _participantCardDecoration({double radius = 12}) {
     return BoxDecoration(
-      color: const Color(0xFF1F2937),
+      color: IosFormColors.groupedBg,
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
-        color: Colors.white.withValues(alpha: 0.12),
+        color: Colors.white.withValues(alpha: 0.08),
         width: 1,
       ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.16),
-          blurRadius: 8,
-          offset: const Offset(0, 1),
-        ),
-      ],
-    );
-  }
-
-  /// Bloque superior “Invitar usuarios” (borde inferior en web).
-  BoxDecoration _inviteSectionDecoration() {
-    return BoxDecoration(
-      color: const Color(0xFF1F2937),
-      borderRadius: BorderRadius.circular(12),
-      border: Border(
-        bottom: BorderSide(
-          color: Colors.white.withValues(alpha: 0.12),
-          width: 1,
-        ),
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.16),
-          blurRadius: 8,
-          offset: const Offset(0, 1),
-        ),
-      ],
     );
   }
 
@@ -1327,19 +1300,20 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     final hasParticipants = participations.isNotEmpty;
     final hasPendingEmails = pendingEmailOnly.isNotEmpty;
     if (!hasParticipants && !hasPendingEmails) {
-      return Center(
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.group_outlined, size: 64, color: Colors.white70),
-            const SizedBox(height: 16),
+            Icon(Icons.group_outlined, size: 48, color: IosFormColors.textTertiary),
+            const SizedBox(height: 12),
             Text(
               AppLocalizations.of(context)!.adminInsightsNoParticipants,
               style: GoogleFonts.poppins(
-                fontSize: 18,
-                color: Colors.white70,
+                fontSize: 16,
+                color: IosFormColors.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -1347,113 +1321,111 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     }
 
     final loc = AppLocalizations.of(context)!;
+    final rows = <Widget>[];
+    for (var i = 0; i < participations.length; i++) {
+      if (i > 0) rows.add(const IosRowSeparator());
+      rows.add(_buildParticipantCard(participations[i]));
+    }
+    for (var i = 0; i < pendingEmailOnly.length; i++) {
+      if (rows.isNotEmpty) rows.add(const IosRowSeparator());
+      rows.add(_buildPendingEmailInvitationCard(pendingEmailOnly[i], loc));
+    }
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ...participations.map((participation) => _buildParticipantCard(participation)),
-          ...pendingEmailOnly.map((invitation) => _buildPendingEmailInvitationCard(invitation, loc)),
+          IosSectionLabel(loc.participants),
+          IosGroupedCard(children: rows),
         ],
       ),
     );
   }
 
-  /// Tarjeta para invitación pendiente por email (usuario aún no registrado).
+  /// Fila para invitación pendiente por email (usuario aún no registrado).
   Widget _buildPendingEmailInvitationCard(PlanInvitation invitation, AppLocalizations loc) {
     final email = invitation.email;
-    final statusLabel = loc.statusShortPending;
-    final statusBg = PlanUserStatusColors.pendingBg;
-    final statusBorder = PlanUserStatusColors.pendingBorder;
-    final statusText = PlanUserStatusColors.pendingText;
     final currentUser = ref.watch(currentUserProvider);
     final isOwner = currentUser?.id == widget.plan.userId;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      decoration: _participantCardDecoration(),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.white60,
-              child: Text(
-                email.isNotEmpty ? email[0].toUpperCase() : '?',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: IosFormColors.nestPaddingLeft(0),
+        right: 4,
+        top: 10,
+        bottom: 10,
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: PlanUserStatusColors.pendingBg,
+            child: Text(
+              email.isNotEmpty ? email[0].toUpperCase() : '?',
+              style: TextStyle(
+                color: PlanUserStatusColors.pendingText,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  email,
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: IosFormColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    email,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: _webOnSurface,
-                    ),
+                const SizedBox(height: 2),
+                Text(
+                  '${loc.invitationPendingEmailLabel} · ${loc.statusShortPending}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: PlanUserStatusColors.pendingText,
+                    fontWeight: FontWeight.w500,
                   ),
-                  Text(
-                    loc.invitationPendingEmailLabel,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: _webMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: statusBg,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: statusBorder, width: 1),
-              ),
-              child: Text(
-                statusLabel,
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: statusText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
+              ],
             ),
-            if (isOwner) ...[
-              const SizedBox(width: 4),
-              PopupMenuButton<String>(
-                onSelected: (value) {
-                  if (value == 'cancel') {
-                    _cancelPendingEmailInvitation(invitation);
-                  }
-                },
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 'cancel',
-                    child: Row(
-                      children: [
-                        Icon(Icons.cancel_outlined, color: Colors.red.shade400, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          loc.cancelInvitationMenuLabel,
-                          style: TextStyle(color: Colors.red.shade400),
-                        ),
-                      ],
-                    ),
+          ),
+          if (isOwner)
+            PopupMenuButton<String>(
+              padding: EdgeInsets.zero,
+              icon: const Icon(Icons.more_horiz, color: IosFormColors.textSecondary),
+              onSelected: (value) {
+                if (value == 'cancel') {
+                  _cancelPendingEmailInvitation(invitation);
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'cancel',
+                  child: Row(
+                    children: [
+                      Icon(Icons.cancel_outlined, color: Colors.red.shade400, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        loc.cancelInvitationMenuLabel,
+                        style: TextStyle(color: Colors.red.shade400),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ],
-          ],
-        ),
+                ),
+              ],
+            ),
+        ],
       ),
     );
   }
@@ -1473,49 +1445,18 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
           data: (list) => list.any((inv) => inv.planId == planId),
           orElse: () => false,
         );
-    // Estado in/out/pending
-    String statusLabel;
-    Color statusBg;
-    Color statusBorder;
-    Color statusText;
+
+    // Estado: solo destacar pendiente / fuera (no el chip «dentro» habitual).
+    Widget? statusWidget;
     if (participation.isPending) {
-      statusLabel = loc.statusShortPending;
-      statusBg = PlanUserStatusColors.pendingBg;
-      statusBorder = PlanUserStatusColors.pendingBorder;
-      statusText = PlanUserStatusColors.pendingText;
-    } else if (participation.isRejected) {
-      statusLabel = loc.statusShortOut;
-      statusBg = PlanUserStatusColors.outBg;
-      statusBorder = PlanUserStatusColors.outBorder;
-      statusText = PlanUserStatusColors.outText;
-    } else {
-      statusLabel = loc.statusShortIn;
-      statusBg = PlanUserStatusColors.inBg;
-      statusBorder = PlanUserStatusColors.inBorder;
-      statusText = PlanUserStatusColors.inText;
-    }
-
-    Widget statusChipWidget = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: statusBg,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: statusBorder, width: 1),
-      ),
-      child: Text(
-        statusLabel,
-        style: GoogleFonts.poppins(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: statusText,
-        ),
-      ),
-    );
-
-    final isMe = currentUser != null && participation.userId == currentUser.id && planId != null;
-    if (isMe) {
-      if (participation.isPending) {
-        statusChipWidget = Material(
+      statusWidget = _statusTextChip(
+        loc.statusShortPending,
+        PlanUserStatusColors.pendingText,
+      );
+      final isMe =
+          currentUser != null && participation.userId == currentUser.id && planId != null;
+      if (isMe) {
+        statusWidget = Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () => planStatusChipShowPendingActions(
@@ -1527,229 +1468,184 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
               hasPendingParticipation: participation.isPending,
             ),
             borderRadius: BorderRadius.circular(6),
-            child: statusChipWidget,
-          ),
-        );
-      } else if (participation.isAccepted) {
-        if (widget.plan.userId == currentUser.id) {
-          statusChipWidget = Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(loc.planCardOrganizerChipMessage)),
-                );
-              },
-              borderRadius: BorderRadius.circular(6),
-              child: statusChipWidget,
-            ),
-          );
-        } else {
-          statusChipWidget = Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => planStatusChipShowLeavePlan(
-                context,
-                ref,
-                plan: widget.plan,
-                userId: currentUser.id,
-              ),
-              borderRadius: BorderRadius.circular(6),
-              child: statusChipWidget,
-            ),
-          );
-        }
-      } else if (participation.isRejected) {
-        statusChipWidget = Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(loc.planStatusRejectedSnackbar, style: GoogleFonts.poppins(color: Colors.white)),
-                  backgroundColor: const Color(0xFF1F2937),
-                ),
-              );
-            },
-            borderRadius: BorderRadius.circular(6),
-            child: statusChipWidget,
+            child: statusWidget,
           ),
         );
       }
+    } else if (participation.isRejected) {
+      statusWidget = _statusTextChip(
+        loc.statusShortOut,
+        PlanUserStatusColors.outText,
+      );
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      decoration: _participantCardDecoration(),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        child: Row(
-          children: [
-            // Columna 1: imagen del usuario
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: _getRoleColor(participation.role),
-              child: Text(
-                _initialsFor(user, participation.userId),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
+    final showRoleLabel = participation.role != 'participant';
+    final roleLabel = showRoleLabel ? _getRoleLabel(participation.role) : null;
+
+    final subtitleParts = <String>[
+      if (usernameLabel != null) usernameLabel,
+      if (roleLabel != null) roleLabel,
+    ];
+    final subtitle = subtitleParts.join(' · ');
+
+    final canManage = currentUser?.id == widget.plan.userId &&
+        participation.userId != widget.plan.userId;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: IosFormColors.nestPaddingLeft(0),
+        right: canManage ? 4 : IosFormColors.rowPaddingH,
+        top: 10,
+        bottom: 10,
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: _getRoleColor(participation.role),
+            child: Text(
+              _initialsFor(user, participation.userId),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
               ),
             ),
-            const SizedBox(width: 10),
-            // Columna 2: nombre y usuario (sin email)
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  displayName,
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: IosFormColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 2),
                   Text(
-                    displayName,
+                    subtitle,
                     style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: _webOnSurface,
+                      color: IosFormColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (usernameLabel != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      usernameLabel,
-                      style: GoogleFonts.poppins(
-                        color: _webMuted,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
                 ],
-              ),
+              ],
             ),
+          ),
+          if (statusWidget != null) ...[
             const SizedBox(width: 8),
-            // Columna 3: rol y estado (in/out/pending)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: _getRoleColor(participation.role),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          _getRoleLabel(participation.role),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      statusChipWidget,
-                    ],
-                  ),
-                  if (currentUser?.id == widget.plan.userId &&
-                      participation.userId != widget.plan.userId)
-                    PopupMenuButton<String>(
-                      onSelected: (value) {
-                        switch (value) {
-                          case 'change_role':
-                            _showRoleChangeDialog(participation);
-                            break;
-                          case 'remove':
-                            _removeParticipant(participation);
-                            break;
-                          case 'cancel_invite':
-                            _cancelPendingParticipationInvite(participation);
-                            break;
-                          case 'reinvite':
-                            _reinviteRejectedParticipant(participation);
-                            break;
-                        }
-                      },
-                      itemBuilder: (context) {
-                        if (participation.isPending) {
-                          return [
-                            PopupMenuItem(
-                              value: 'cancel_invite',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.cancel_outlined, color: Colors.red.shade400),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    loc.cancelInvitationMenuLabel,
-                                    style: TextStyle(color: Colors.red.shade400),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ];
-                        }
-                        if (participation.isRejected) {
-                          return [
-                            PopupMenuItem(
-                              value: 'reinvite',
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.mail_outline),
-                                  const SizedBox(width: 8),
-                                  Text(loc.participantsInviteResendButton),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 'remove',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.remove_circle, color: Colors.red),
-                                  SizedBox(width: 8),
-                                  Text(loc.delete, style: const TextStyle(color: Colors.red)),
-                                ],
-                              ),
-                            ),
-                          ];
-                        }
-                        return [
-                          PopupMenuItem(
-                            value: 'change_role',
-                            child: Row(
-                              children: [
-                                const Icon(Icons.edit),
-                                const SizedBox(width: 8),
-                                Text(loc.edit),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem(
-                            value: 'remove',
-                            child: Row(
-                              children: [
-                                Icon(Icons.remove_circle, color: Colors.red),
-                                SizedBox(width: 8),
-                                Text(loc.delete,
-                                    style: const TextStyle(color: Colors.red)),
-                              ],
-                            ),
-                          ),
-                        ];
-                      },
-                    ),
-                ],
-              ),
+            statusWidget,
           ],
-        ),
+          if (canManage)
+            PopupMenuButton<String>(
+              padding: EdgeInsets.zero,
+              icon: const Icon(Icons.more_horiz, color: IosFormColors.textSecondary),
+              onSelected: (value) {
+                switch (value) {
+                  case 'change_role':
+                    _showRoleChangeDialog(participation);
+                    break;
+                  case 'remove':
+                    _removeParticipant(participation);
+                    break;
+                  case 'cancel_invite':
+                    _cancelPendingParticipationInvite(participation);
+                    break;
+                  case 'reinvite':
+                    _reinviteRejectedParticipant(participation);
+                    break;
+                }
+              },
+              itemBuilder: (context) {
+                if (participation.isPending) {
+                  return [
+                    PopupMenuItem(
+                      value: 'cancel_invite',
+                      child: Row(
+                        children: [
+                          Icon(Icons.cancel_outlined, color: Colors.red.shade400),
+                          const SizedBox(width: 8),
+                          Text(
+                            loc.cancelInvitationMenuLabel,
+                            style: TextStyle(color: Colors.red.shade400),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ];
+                }
+                if (participation.isRejected) {
+                  return [
+                    PopupMenuItem(
+                      value: 'reinvite',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.mail_outline),
+                          const SizedBox(width: 8),
+                          Text(loc.participantsInviteResendButton),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'remove',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.remove_circle, color: Colors.red),
+                          const SizedBox(width: 8),
+                          Text(loc.delete, style: const TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ];
+                }
+                return [
+                  PopupMenuItem(
+                    value: 'change_role',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.edit),
+                        const SizedBox(width: 8),
+                        Text(loc.edit),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'remove',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.remove_circle, color: Colors.red),
+                        const SizedBox(width: 8),
+                        Text(loc.delete, style: const TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
+                ];
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statusTextChip(String label, Color color) {
+    return Text(
+      label,
+      style: GoogleFonts.poppins(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: color,
       ),
     );
   }
@@ -1842,65 +1738,72 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     if (!isParticipant) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1F2937),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: _webBorder,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          IosGroupedCard(
+            children: [
+              Padding(
+                padding: EdgeInsets.only(
+                  left: IosFormColors.nestPaddingLeft(0),
+                  right: IosFormColors.rowPaddingH,
+                  top: 12,
+                  bottom: 12,
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.exit_to_app, color: Colors.orange.shade300, size: 22),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            AppLocalizations.of(context)!.planCardLeavePlanTitle,
+                            style: GoogleFonts.poppins(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: IosFormColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            AppLocalizations.of(context)!
+                                .planCardLeavePlanConfirmBody(widget.plan.name),
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: IosFormColors.textSecondary,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _showLeavePlanConfirmation(),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.orange.shade300,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context)!.planCardLeavePlanButton,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.16),
-              blurRadius: 8,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.exit_to_app, color: Colors.orange.shade300, size: 22),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.planCardLeavePlanTitle,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: _webOnSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    AppLocalizations.of(context)!
-                        .planCardLeavePlanConfirmBody(widget.plan.name),
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: _webMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            OutlinedButton(
-              onPressed: () => _showLeavePlanConfirmation(),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.orange.shade300,
-                side: BorderSide(color: Colors.orange.shade400),
-              ),
-              child: Text(
-                AppLocalizations.of(context)!.planCardLeavePlanButton,
-                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -2012,236 +1915,228 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
   }
 
   /// T233: Sin botón X; lista va primero, invitar a continuación.
-  Widget _buildInviteUsersSection() {
+  Widget _buildInviteUsersSection({bool hideTitle = false}) {
     return Consumer(
       builder: (context, ref, _) {
         final participantsAsync = ref.watch(planParticipantsProvider(widget.plan.id!));
+        final loc = AppLocalizations.of(context)!;
 
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: _inviteSectionDecoration(),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (!hideTitle) IosSectionLabel(loc.participantsInviteSectionTitle),
+              IosGroupedCard(
                 children: [
-                  Flexible(
-                    child: Text(
-                      AppLocalizations.of(context)!.inviteByEmailTitle,
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                        letterSpacing: 0.1,
-                      ),
-                    ),
-                  ),
-                  Flexible(
-                    child: Wrap(
-                      spacing: 8,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: _inviteByEmailDialog,
-                          icon: const Icon(Icons.mail_outline, color: Colors.white),
-                          label: Text(
-                            AppLocalizations.of(context)!.inviteByEmailTitle,
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColorScheme.color2,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _inviteByEmailDialog,
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          left: IosFormColors.nestPaddingLeft(0),
+                          right: IosFormColors.rowPaddingH,
+                          top: 12,
+                          bottom: 12,
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1F2937),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    width: 1,
-                  ),
-                ),
-                child: TextField(
-                  onChanged: _filterUsers,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: '${AppLocalizations.of(context)!.search}...',
-                    hintStyle: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: Colors.white60,
-                    ),
-                    prefixIcon: Icon(Icons.search, color: Colors.white70, size: 20),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: AppColorScheme.color2,
-                        width: 1.8,
-                      ),
-                    ),
-                    filled: true,
-                    fillColor: Colors.transparent,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              participantsAsync.when(
-                data: (participations) {
-                  final idsBlockingInvite = participations
-                      .where((p) => p.isAccepted || p.isPending)
-                      .map((p) => p.userId)
-                      .toSet();
-                  // Tras rechazo (out) sí se puede re-invitar desde la lista (LISTA 116).
-                  final availableUsers = _filteredUsers
-                      .where((user) =>
-                          !idsBlockingInvite.contains(user.id) &&
-                          user.id != widget.plan.userId)
-                      .toList();
-
-                  if (_isLoadingUsers) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  return ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 240),
-                    child: Container(
-                      decoration: _participantCardDecoration(radius: 14),
-                      child: availableUsers.isEmpty
-                          ? Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Text(
-                                  _searchQuery.isEmpty
-                                      ? AppLocalizations.of(context)!
-                                          .planDetailsNoAvailableParticipants
-                                      : AppLocalizations.of(context)!
-                                          .search,
-                                  style: GoogleFonts.poppins(
-                                    color: _webMuted,
-                                    fontSize: 14,
-                                  ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.mail_outline, color: IosFormColors.accent, size: 22),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                loc.participantsInviteByEmailRow,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: IosFormColors.textPrimary,
                                 ),
                               ),
-                            )
-                          : ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: availableUsers.length,
-                              itemBuilder: (context, index) {
-                                final user = availableUsers[index];
-                                return Container(
-                                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: _participantCardDecoration(),
-                                  child: ListTile(
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                    leading: CircleAvatar(
-                                      radius: 20,
-                                      backgroundColor: AppColorScheme.color2,
-                                      child: Text(
-                                        _computeInitials(user),
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                    title: Text(
-                                      _formatUserDisplay(user, user.id),
+                            ),
+                            Icon(Icons.chevron_right, color: IosFormColors.textTertiary, size: 20),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const IosRowSeparator(),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      IosFormColors.nestPaddingLeft(0),
+                      8,
+                      IosFormColors.rowPaddingH,
+                      8,
+                    ),
+                    child: TextField(
+                      onChanged: _filterUsers,
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        color: IosFormColors.textPrimary,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: loc.participantsSearchUsersHint,
+                        hintStyle: GoogleFonts.poppins(
+                          fontSize: 16,
+                          color: IosFormColors.textTertiary,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: IosFormColors.textSecondary,
+                          size: 20,
+                        ),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                    ),
+                  ),
+                  const IosRowSeparator(),
+                  participantsAsync.when(
+                    data: (participations) {
+                      final idsBlockingInvite = participations
+                          .where((p) => p.isAccepted || p.isPending)
+                          .map((p) => p.userId)
+                          .toSet();
+                      final availableUsers = _filteredUsers
+                          .where((user) =>
+                              !idsBlockingInvite.contains(user.id) &&
+                              user.id != widget.plan.userId)
+                          .toList();
+
+                      if (_isLoadingUsers) {
+                        return const Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
+                      if (availableUsers.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                          child: Text(
+                            _searchQuery.isEmpty
+                                ? loc.planDetailsNoAvailableParticipants
+                                : loc.search,
+                            style: GoogleFonts.poppins(
+                              color: IosFormColors.textSecondary,
+                              fontSize: 14,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        );
+                      }
+
+                      return ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 280),
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          itemCount: availableUsers.length,
+                          separatorBuilder: (_, __) => const IosRowSeparator(),
+                          itemBuilder: (context, index) {
+                            final user = availableUsers[index];
+                            final username = user.username != null &&
+                                    user.username!.trim().isNotEmpty
+                                ? '@${user.username!.trim()}'
+                                : null;
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                left: IosFormColors.nestPaddingLeft(0),
+                                right: IosFormColors.rowPaddingH,
+                                top: 10,
+                                bottom: 10,
+                              ),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 18,
+                                    backgroundColor: AppColorScheme.color2,
+                                    child: Text(
+                                      _computeInitials(user),
                                       style: GoogleFonts.poppins(
-                                        color: _webOnSurface,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    subtitle: user.username != null && user.username!.trim().isNotEmpty
-                                        ? Text(
-                                            '@${user.username!.trim()}',
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          _formatUserDisplay(user, user.id),
+                                          style: GoogleFonts.poppins(
+                                            color: IosFormColors.textPrimary,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (username != null) ...[
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            username,
                                             style: GoogleFonts.poppins(
-                                              color: _webMuted,
+                                              color: IosFormColors.textSecondary,
                                               fontSize: 12,
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
-                                          )
-                                        : null,
-                                    trailing: Material(
-                                      color: AppColorScheme.color2,
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: InkWell(
-                                        onTap: () => _inviteUser(user),
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                          child: Text(
-                                            AppLocalizations.of(context)!.inviteUserInvite,
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.white,
-                                            ),
                                           ),
-                                        ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => _inviteUser(user),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: IosFormColors.accent,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      minimumSize: Size.zero,
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: Text(
+                                      loc.inviteUserInvite,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ),
-                                );
-                              },
-                            ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                    loading: () => const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Center(child: CircularProgressIndicator()),
                     ),
-                  );
-                },
-                loading: () => const SizedBox(
-                  height: 120,
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (error, _) => Container(
-                  height: 120,
-                  alignment: Alignment.center,
-                  child: Text(
-                    AppLocalizations.of(context)!
-                        .errorLoadingParticipants(error.toString()),
-                    style: const TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
+                    error: (error, _) => Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        loc.errorLoadingParticipants(error.toString()),
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-                  ],
-                ),
-              );
-            },
+            ],
           ),
         );
       },
@@ -2318,7 +2213,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     }
   }
 
-  Widget _buildPendingInvitationsSection() {
+  Widget _buildPendingInvitationsSection({bool hideTitle = false}) {
     final currentUser = ref.watch(currentUserProvider);
     final isOwner = currentUser?.id == widget.plan.userId;
     return FutureBuilder<List<PlanInvitation>>(
@@ -2332,22 +2227,35 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         }
         final loc = AppLocalizations.of(context)!;
         final items = snapshot.data ?? [];
-        if (items.isEmpty) return const SizedBox.shrink();
+        if (items.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text(
+              loc.participantsInvitationsEmpty,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: _webMuted,
+              ),
+            ),
+          );
+        }
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                loc.invitationsSectionTitle,
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: _webOnSurface,
-                  letterSpacing: 0.1,
+              if (!hideTitle) ...[
+                Text(
+                  loc.invitationsSectionTitle,
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: _webOnSurface,
+                    letterSpacing: 0.1,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
+                const SizedBox(height: 8),
+              ],
               ...items.map((inv) {
                 final created = _formatDate(inv.createdAt);
                 final expires = _formatDate(inv.expiresAt);
@@ -2356,54 +2264,67 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                 return Container(
                   margin: const EdgeInsets.only(bottom: 8),
                   decoration: _participantCardDecoration(radius: 18),
-                  child: ListTile(
-                    title: Text(
-                      inv.email,
-                      style: GoogleFonts.poppins(
-                        color: _webOnSurface,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: ListTile(
+                      title: Text(
+                        inv.email,
+                        style: GoogleFonts.poppins(
+                          color: _webOnSurface,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    subtitle: Text(
-                      'Estado: $statusLabel • Rol: ${inv.role} • Creada: $created${isPending ? ' • Expira: $expires' : ''}',
-                      style: GoogleFonts.poppins(
-                        color: _webMuted,
-                        fontSize: 12,
+                      subtitle: Text(
+                        'Estado: $statusLabel • Rol: ${inv.role} • Creada: $created${isPending ? ' • Expira: $expires' : ''}',
+                        style: GoogleFonts.poppins(
+                          color: _webMuted,
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (isPending)
-                          IconButton(
-                            tooltip: loc.tooltipCopyInviteLink,
-                            icon: Icon(Icons.link, color: Colors.white70),
-                            onPressed: () async {
-                              final link = ref.read(invitationServiceProvider).generateInvitationLink(inv.token);
-                              await Clipboard.setData(ClipboardData(text: link));
-                              if (!context.mounted) return;
-                              _showSnackBarSuccess(context, loc.snackLinkCopiedShort);
-                            },
-                          ),
-                        if (isOwner && isPending)
-                          IconButton(
-                            tooltip: loc.tooltipCancelAction,
-                            icon: Icon(Icons.cancel, color: Colors.red.shade400),
-                            onPressed: () async {
-                              if (inv.id == null) return;
-                              final ok = await ref.read(invitationServiceProvider).cancelInvitation(inv.id!);
-                              if (!context.mounted) return;
-                              if (ok) {
-                                ref.invalidate(invitationsForPlanProvider(widget.plan.id!));
-                                if (mounted) setState(() {});
-                                _showSnackBarSuccess(context, loc.snackInvitationCancelledShort);
-                              } else {
-                                _showSnackBarError(context, loc.snackInvitationCancelFailed);
-                              }
-                            },
-                          ),
-                      ],
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isPending)
+                            IconButton(
+                              tooltip: loc.tooltipCopyInviteLink,
+                              icon: Icon(Icons.link, color: Colors.white70),
+                              onPressed: () async {
+                                final link = ref
+                                    .read(invitationServiceProvider)
+                                    .generateInvitationLink(inv.token);
+                                await Clipboard.setData(
+                                    ClipboardData(text: link));
+                                if (!context.mounted) return;
+                                _showSnackBarSuccess(
+                                    context, loc.snackLinkCopiedShort);
+                              },
+                            ),
+                          if (isOwner && isPending)
+                            IconButton(
+                              tooltip: loc.tooltipCancelAction,
+                              icon: Icon(Icons.cancel,
+                                  color: Colors.red.shade400),
+                              onPressed: () async {
+                                if (inv.id == null) return;
+                                final ok = await ref
+                                    .read(invitationServiceProvider)
+                                    .cancelInvitation(inv.id!);
+                                if (!context.mounted) return;
+                                if (ok) {
+                                  ref.invalidate(invitationsForPlanProvider(
+                                      widget.plan.id!));
+                                  if (mounted) setState(() {});
+                                  _showSnackBarSuccess(context,
+                                      loc.snackInvitationCancelledShort);
+                                } else {
+                                  _showSnackBarError(context,
+                                      loc.snackInvitationCancelFailed);
+                                }
+                              },
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -2518,36 +2439,77 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
   @override
   Widget build(BuildContext context) {
     final isCompact = MediaQuery.of(context).size.width < 900;
+    final loc = AppLocalizations.of(context)!;
 
     Widget content() {
-      final scrollContent = LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Column(
+      final tabbedBody = DefaultTabController(
+        length: 3,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Builder(
+                builder: (context) {
+                  final tabController = DefaultTabController.of(context);
+                  return ListenableBuilder(
+                    listenable: tabController,
+                    builder: (context, _) {
+                      return IosSegmentedControl(
+                        labels: [
+                          loc.participants,
+                          loc.participantsTabInvite,
+                          loc.participantsTabInvitations,
+                        ],
+                        selectedIndex: tabController.index,
+                        fontSize: 12,
+                        onChanged: tabController.animateTo,
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: TabBarView(
                 children: [
-                  _buildParticipantsList(),
-                  _buildInviteUsersSection(),
-                  _buildLeavePlanSection(),
-                  _buildPendingInvitationsSection(),
-                  _buildMyInvitationsSection(),
+                  ListView(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    children: [
+                      _buildParticipantsList(),
+                      _buildLeavePlanSection(),
+                    ],
+                  ),
+                  ListView(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    children: [
+                      _buildInviteUsersSection(hideTitle: true),
+                    ],
+                  ),
+                  ListView(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    children: [
+                      _buildPendingInvitationsSection(hideTitle: true),
+                      _buildMyInvitationsSection(),
+                    ],
+                  ),
                 ],
               ),
             ),
-          );
-        },
+          ],
+        ),
       );
 
       final gradientBox = Container(
         decoration: const BoxDecoration(color: _webPageBg),
         child: isCompact
-            ? scrollContent
+            ? tabbedBody
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildParticipantsHeader(),
-                  Expanded(child: scrollContent),
+                  Expanded(child: tabbedBody),
                 ],
               ),
       );
@@ -2585,7 +2547,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
             ),
             iconTheme: const IconThemeData(color: Colors.white),
             title: Text(
-              AppLocalizations.of(context)!.participants,
+              loc.participants,
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

@@ -480,6 +480,60 @@
   },
   "paymentsExpenseSplitBetween": "Repartir entre",
   "paymentsActivityTitle": "Actividad",
+  "paymentsTabBalances": "Balances",
+  "@paymentsTabBalances": {
+    "description": "Pestaña corta Pagos (móvil)"
+  },
+  "paymentsTabTransfers": "Transferencias",
+  "@paymentsTabTransfers": {
+    "description": "Pestaña corta Pagos (móvil)"
+  },
+  "paymentsExpensesListButton": "Lista de gastos",
+  "@paymentsExpensesListButton": {},
+  "paymentsExpensesListTitle": "Lista de gastos",
+  "@paymentsExpensesListTitle": {},
+  "paymentsExpensesListEmpty": "No hay gastos ni garantías registrados todavía.",
+  "@paymentsExpensesListEmpty": {},
+  "paymentsExpensesExportMenu": "Exportar",
+  "@paymentsExpensesExportMenu": {},
+  "paymentsExpensesExportText": "Copiar como texto",
+  "@paymentsExpensesExportText": {},
+  "paymentsExpensesExportCsv": "Copiar como CSV",
+  "@paymentsExpensesExportCsv": {},
+  "paymentsExpensesExportCopied": "Copiado al portapapeles",
+  "@paymentsExpensesExportCopied": {},
+  "paymentsExpensesExportEmpty": "No hay nada que exportar",
+  "@paymentsExpensesExportEmpty": {},
+  "paymentsSettlementExportButton": "Exportar cuadre completo",
+  "@paymentsSettlementExportButton": {},
+  "paymentsSettlementExportCopied": "Cuadre copiado al portapapeles",
+  "@paymentsSettlementExportCopied": {},
+  "paymentsSettlementExportNoTransfers": "(sin sugerencias de transferencia)",
+  "@paymentsSettlementExportNoTransfers": {},
+  "paymentsGuaranteeListConcept": "Garantía de reserva",
+  "@paymentsGuaranteeListConcept": {},
+  "paymentsOpenLinkedEvent": "Abrir evento",
+  "@paymentsOpenLinkedEvent": {},
+  "paymentsOpenLinkedAccommodation": "Abrir alojamiento",
+  "@paymentsOpenLinkedAccommodation": {},
+  "paymentsGuaranteeSplitLabel": "Garantía · reparto igual · {count} personas",
+  "@paymentsGuaranteeSplitLabel": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "paymentsExpenseSplitSummaryEqual": "Reparto igual · {count} personas",
+  "@paymentsExpenseSplitSummaryEqual": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "paymentsExpenseSplitSummaryCustom": "Reparto personalizado · {count} personas",
+  "@paymentsExpenseSplitSummaryCustom": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "paymentsExpenseSaved": "Gasto registrado",
   "paymentsExpenseSaveError": "Error al guardar el gasto",
   "paymentsExpenseSplitEqual": "Reparto igual",
@@ -2337,6 +2391,10 @@
   "eventPaymentsSaveFirst": "Guarda el evento para registrar gastos vinculados.",
   "eventPaymentsBudgetLabel": "Coste previsto (General)",
   "eventPaymentsBudgetFooter": "Referencia del presupuesto; no sustituye un gasto repartido.",
+  "eventPaymentsOpenAddExpense": "Añadir gasto (quién pagó y reparto)",
+  "@eventPaymentsOpenAddExpense": {
+    "description": "Fila en General del evento que lleva a la pestaña Pagos"
+  },
   "eventPaymentsSectionExpenses": "Gastos de este evento",
   "eventPaymentsEmpty": "No hay gastos vinculados a este evento.",
   "eventPaymentsRecordedTotal": "Total registrado: {amount}",
@@ -3301,6 +3359,22 @@
   "snackInviteSendError": "Error al enviar invitación: {error}",
   "@snackInviteSendError": { "placeholders": { "error": { "type": "String" } } },
   "inviteByEmailTitle": "Invitar por email",
+  "participantsTabInvite": "Invitar",
+  "@participantsTabInvite": {
+    "description": "Pestaña corta pantalla Participantes"
+  },
+  "participantsTabInvitations": "Invitaciones",
+  "@participantsTabInvitations": {
+    "description": "Pestaña corta pantalla Participantes"
+  },
+  "participantsInvitationsEmpty": "No hay invitaciones de este plan.",
+  "@participantsInvitationsEmpty": {},
+  "participantsInviteSectionTitle": "Invitar",
+  "@participantsInviteSectionTitle": {},
+  "participantsInviteByEmailRow": "Por email",
+  "@participantsInviteByEmailRow": {},
+  "participantsSearchUsersHint": "Buscar usuarios",
+  "@participantsSearchUsersHint": {},
   "invitePendingExistsForEmail": "Ya existe una invitación pendiente para {email}.\n\n¿Qué deseas hacer?",
   "@invitePendingExistsForEmail": { "placeholders": { "email": { "type": "String" } } },
   "roleFieldLabel": "Rol",

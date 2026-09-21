@@ -8,6 +8,62 @@ import '../../../../features/calendar/domain/models/accommodation.dart';
 import '../../../../features/calendar/domain/models/plan_participation.dart';
 import '../../../../features/budget/domain/services/budget_service.dart';
 
+/// Participantes entre los que se reparte una garantía pagada (T273).
+///
+/// Misma regla que el coste de eventos en [BudgetService]: si el evento/
+/// alojamiento es para todos → participantes reales del plan; si no →
+/// `commonPart.participantIds`; si no hay vínculo usable → todos los reales.
+Set<String> guaranteeShareParticipantIds({
+  required PersonalPayment payment,
+  required List<Event> events,
+  required List<Accommodation> accommodations,
+  required Set<String> realParticipantIds,
+}) {
+  if (payment.eventId != null && payment.eventId!.isNotEmpty) {
+    Event? event;
+    for (final e in events) {
+      if (e.id == payment.eventId) {
+        event = e;
+        break;
+      }
+    }
+    if (event != null) {
+      final isForAll = event.commonPart?.isForAllParticipants ?? false;
+      final ids = event.commonPart?.participantIds ?? const <String>[];
+      if (isForAll && realParticipantIds.isNotEmpty) {
+        return Set<String>.from(realParticipantIds);
+      }
+      if (ids.isNotEmpty) {
+        return ids.toSet();
+      }
+    }
+  }
+
+  if (payment.accommodationId != null && payment.accommodationId!.isNotEmpty) {
+    Accommodation? accommodation;
+    for (final a in accommodations) {
+      if (a.id == payment.accommodationId) {
+        accommodation = a;
+        break;
+      }
+    }
+    if (accommodation != null) {
+      final isForAll =
+          accommodation.commonPart?.isForAllParticipants ?? false;
+      final ids =
+          accommodation.commonPart?.participantIds ?? const <String>[];
+      if (isForAll && realParticipantIds.isNotEmpty) {
+        return Set<String>.from(realParticipantIds);
+      }
+      if (ids.isNotEmpty) {
+        return ids.toSet();
+      }
+    }
+  }
+
+  return Set<String>.from(realParticipantIds);
+}
+
 /// T102: Servicio para calcular balances y deudas entre participantes
 class BalanceService {
   final BudgetService _budgetService = BudgetService();
@@ -75,6 +131,29 @@ class BalanceService {
       }
     }
 
+    // Garantías pagadas (T273): cuentan como pagado del garantizador y como coste
+    // repartido entre los participantes del evento/alojamiento vinculado.
+    final realParticipantIds = participations
+        .where((p) => p.role != 'observer')
+        .map((p) => p.userId)
+        .toSet();
+    final guaranteeCostByParticipant = <String, double>{};
+    for (final payment
+        in payments.where((p) => p.status == 'paid' && p.isGuarantee)) {
+      final shareIds = guaranteeShareParticipantIds(
+        payment: payment,
+        events: events,
+        accommodations: accommodations,
+        realParticipantIds: realParticipantIds,
+      );
+      if (shareIds.isEmpty) continue;
+      final share = payment.amount / shareIds.length;
+      for (final uid in shareIds) {
+        guaranteeCostByParticipant[uid] =
+            (guaranteeCostByParticipant[uid] ?? 0.0) + share;
+      }
+    }
+
     // Paso 3: Calcular balances
     final balancesByParticipant = <String, ParticipantBalance>{};
     
@@ -89,7 +168,9 @@ class BalanceService {
       final userId = participation.userId;
       final baseCost = budgetSummary.costByParticipant[userId] ?? 0.0;
       final expenseCost = expenseCostByParticipant[userId] ?? 0.0;
-      final totalCost = baseCost + kittyExpensePerParticipant + expenseCost;
+      final guaranteeCost = guaranteeCostByParticipant[userId] ?? 0.0;
+      final totalCost =
+          baseCost + kittyExpensePerParticipant + expenseCost + guaranteeCost;
       final participantPayments = paymentsByParticipant[userId] ?? [];
       final paidFromPayments = participantPayments.fold<double>(
         0.0,
@@ -174,8 +255,12 @@ class BalanceService {
         final paidFromKitty = kittyContributionsByUser[uid] ?? 0.0;
         final paidFromExpenses = paidFromPlanExpensesByUser[uid] ?? 0.0;
         final expenseCost = expenseCostByParticipant[uid] ?? 0.0;
+        final guaranteeCost = guaranteeCostByParticipant[uid] ?? 0.0;
         final totalPaid = paidFromPayments + paidFromKitty + paidFromExpenses;
-        final totalCost = entry.value + kittyExpensePerParticipant + expenseCost;
+        final totalCost = entry.value +
+            kittyExpensePerParticipant +
+            expenseCost +
+            guaranteeCost;
         final balance = totalPaid - totalCost;
 
         final paymentItems = <PaymentItem>[
@@ -235,13 +320,18 @@ class BalanceService {
       }
     }
 
-    // Participantes que solo aparecen en gastos Tricount (pagador o en reparto)
-    final expenseParticipantIds = <String>{};
+    // Participantes que solo aparecen en gastos Tricount o en garantías
+    final orphanParticipantIds = <String>{};
     for (final e in planExpenses) {
-      expenseParticipantIds.add(e.payerId);
-      expenseParticipantIds.addAll(e.participantIds);
+      orphanParticipantIds.add(e.payerId);
+      orphanParticipantIds.addAll(e.participantIds);
     }
-    for (final uid in expenseParticipantIds) {
+    orphanParticipantIds.addAll(guaranteeCostByParticipant.keys);
+    for (final payment
+        in payments.where((p) => p.status == 'paid' && p.isGuarantee)) {
+      orphanParticipantIds.add(payment.participantId);
+    }
+    for (final uid in orphanParticipantIds) {
       if (balancesByParticipant.containsKey(uid)) continue;
       final paidFromPayments = (paymentsByParticipant[uid] ?? []).fold<double>(
         0.0,
@@ -250,8 +340,10 @@ class BalanceService {
       final paidFromKitty = kittyContributionsByUser[uid] ?? 0.0;
       final paidFromExpenses = paidFromPlanExpensesByUser[uid] ?? 0.0;
       final expenseCost = expenseCostByParticipant[uid] ?? 0.0;
+      final guaranteeCost = guaranteeCostByParticipant[uid] ?? 0.0;
       final totalPaid = paidFromPayments + paidFromKitty + paidFromExpenses;
-      final totalCost = kittyExpensePerParticipant + expenseCost;
+      final totalCost =
+          kittyExpensePerParticipant + expenseCost + guaranteeCost;
       final balance = totalPaid - totalCost;
       final paymentItems = <PaymentItem>[
         ...(paymentsByParticipant[uid] ?? []).map((p) => PaymentItem(

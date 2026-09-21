@@ -2,6 +2,22 @@
 
 Registro ligero de errores que la IA ha detectado y corregido automáticamente, para evitar repetirlos y documentar patrones de solución.
 
+### [2026-09-21] Pagos Balances — ExpansionTile ink bajo DecoratedBox
+
+- **Contexto:** Pestaña Balances en `payment_summary_page.dart` (tilePadding 12,2,8,2).
+- **Error:** `ListTile background color or ink splashes may be invisible` + `DecoratedBox(bg: #1F2937, border white α0.12, r12)`.
+- **Causa raíz:** `_buildBalancesSection` usaba `Container(decoration: _cardDecoration())`; `ExpansionTile` pinta ink vía ListTile en el Material ancestro y la caja opaca lo tapa.
+- **Solución aplicada:** `Material(color: _cSurfaceBg, shape: RoundedRectangleBorder + side, clipBehavior: antiAlias)`.
+- **Notas:** Mismo patrón que `IosGroupedCard`; no meter `ListTile`/`ExpansionTile` bajo `DecoratedBox` con color.
+
+### [2026-09-21] Interpolación Dart — `$` omitido en string
+
+- **Contexto:** Export garantía en `payment_expenses_list_page.dart`.
+- **Error:** `unused_local_variable` sobre `t` (hotelName).
+- **Causa raíz:** Cadena `'alojamiento: {(t != null) ? t : …}'` sin `$` antes de `{`, así que no interpolaba.
+- **Solución aplicada:** Usar `'…${(cond) ? x : y}'` (o variable con nombre claro).
+- **Notas:** Si el analyzer marca unused en una var “usada” en string, revisar que falte el `$`.
+
 ### [2026-09-14] Simulador iOS — primer build eterno tras limpiar disco
 
 - **Contexto:** `flutter clean` + borrar DerivedData; `flutter run` al iPhone 17 Pro.

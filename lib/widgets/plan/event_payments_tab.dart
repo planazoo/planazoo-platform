@@ -272,11 +272,42 @@ class EventPaymentsTab extends ConsumerWidget {
                   SizedBox(height: gap),
                   IosGroupedCard(
                     children: [
-                      IosSettingsRow(
-                        label: loc.paymentsAddExpense,
-                        value: '',
-                        chevron: true,
-                        onTap: () => _openExpenseDialog(context, ref),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => _openExpenseDialog(context, ref),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.add_circle_outline,
+                                  color: IosFormColors.accent,
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    loc.paymentsAddExpense,
+                                    style: TextStyle(
+                                      color: IosFormColors.accent,
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right,
+                                  color: IosFormColors.textTertiary,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),

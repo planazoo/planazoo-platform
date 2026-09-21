@@ -2046,14 +2046,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           currentScreen = 'calendar';
         });
       },
-      onManageParticipants: forceReadOnly
-          ? null
-          : () {
-              setState(() {
-                currentScreen = 'participants';
-                selectedWidgetId = 'W16';
-              });
-            },
     );
   }
 

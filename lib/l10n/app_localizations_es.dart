@@ -415,6 +415,71 @@ class AppLocalizationsEs extends AppLocalizations {
   String get paymentsActivityTitle => 'Actividad';
 
   @override
+  String get paymentsTabBalances => 'Balances';
+
+  @override
+  String get paymentsTabTransfers => 'Transferencias';
+
+  @override
+  String get paymentsExpensesListButton => 'Lista de gastos';
+
+  @override
+  String get paymentsExpensesListTitle => 'Lista de gastos';
+
+  @override
+  String get paymentsExpensesListEmpty =>
+      'No hay gastos ni garantías registrados todavía.';
+
+  @override
+  String get paymentsExpensesExportMenu => 'Exportar';
+
+  @override
+  String get paymentsExpensesExportText => 'Copiar como texto';
+
+  @override
+  String get paymentsExpensesExportCsv => 'Copiar como CSV';
+
+  @override
+  String get paymentsExpensesExportCopied => 'Copiado al portapapeles';
+
+  @override
+  String get paymentsExpensesExportEmpty => 'No hay nada que exportar';
+
+  @override
+  String get paymentsSettlementExportButton => 'Exportar cuadre completo';
+
+  @override
+  String get paymentsSettlementExportCopied => 'Cuadre copiado al portapapeles';
+
+  @override
+  String get paymentsSettlementExportNoTransfers =>
+      '(sin sugerencias de transferencia)';
+
+  @override
+  String get paymentsGuaranteeListConcept => 'Garantía de reserva';
+
+  @override
+  String get paymentsOpenLinkedEvent => 'Abrir evento';
+
+  @override
+  String get paymentsOpenLinkedAccommodation => 'Abrir alojamiento';
+
+  @override
+  String paymentsGuaranteeSplitLabel(int count) {
+    return 'Garantía · reparto igual · $count personas';
+  }
+
+  @override
+  String paymentsExpenseSplitSummaryEqual(int count) {
+    return 'Reparto igual · $count personas';
+  }
+
+  @override
+  String paymentsExpenseSplitSummaryCustom(int count) {
+    return 'Reparto personalizado · $count personas';
+  }
+
+  @override
   String get paymentsExpenseSaved => 'Gasto registrado';
 
   @override
@@ -2792,6 +2857,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Referencia del presupuesto; no sustituye un gasto repartido.';
 
   @override
+  String get eventPaymentsOpenAddExpense =>
+      'Añadir gasto (quién pagó y reparto)';
+
+  @override
   String get eventPaymentsSectionExpenses => 'Gastos de este evento';
 
   @override
@@ -4201,6 +4270,25 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get inviteByEmailTitle => 'Invitar por email';
+
+  @override
+  String get participantsTabInvite => 'Invitar';
+
+  @override
+  String get participantsTabInvitations => 'Invitaciones';
+
+  @override
+  String get participantsInvitationsEmpty =>
+      'No hay invitaciones de este plan.';
+
+  @override
+  String get participantsInviteSectionTitle => 'Invitar';
+
+  @override
+  String get participantsInviteByEmailRow => 'Por email';
+
+  @override
+  String get participantsSearchUsersHint => 'Buscar usuarios';
 
   @override
   String invitePendingExistsForEmail(String email) {

@@ -419,6 +419,60 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
             ),
           ),
           if (_selectedOption == 'payments' && !isPendingPreview) ...[
+            const SizedBox(width: 4),
+            Tooltip(
+              message: loc.paymentsDisclaimerText,
+              child: InkWell(
+                onTap: () {
+                  showDialog<void>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: const Color(0xFF1F2937),
+                      title: Text(
+                        loc.paymentsSummaryTitle,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      content: Text(
+                        loc.paymentsDisclaimerText,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white70,
+                          fontSize: 14,
+                          height: 1.4,
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: Text(loc.close),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(17),
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1F2937),
+                    borderRadius: BorderRadius.circular(17),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.info_outline,
+                    color: AppColorScheme.color3,
+                    size: 18,
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(width: 8),
             Tooltip(
               message: loc.paymentsAddExpense,
