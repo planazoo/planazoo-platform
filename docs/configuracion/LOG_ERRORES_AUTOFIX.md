@@ -2,6 +2,14 @@
 
 Registro ligero de errores que la IA ha detectado y corregido automáticamente, para evitar repetirlos y documentar patrones de solución.
 
+### [2026-09-21] TestFlight — Fastlane Spaceship vs altool + build redundante
+
+- **Contexto:** Publicar `1.0.0+10` → `+11` (ciclo PUBLICAR_APP).
+- **Error:** Fastlane `Could not receive latest API key` / `Service key is empty`; luego altool `Redundant Binary Upload` build 10.
+- **Causa raíz:** Spaceship de Fastlane 2.230 no renueva sesión ASC; el build `+10` ya existía en ASC.
+- **Solución aplicada:** Subir con `xcrun altool --upload-app`; bump a `1.0.0+11`, rebuild IPA, altool de nuevo → UPLOAD SUCCEEDED.
+- **Notas:** No rebuild si solo falla el login de Fastlane; si altool dice redundant, subir `+build` y regenerar IPA.
+
 ### [2026-09-21] Pagos Balances — ExpansionTile ink bajo DecoratedBox
 
 - **Contexto:** Pestaña Balances en `payment_summary_page.dart` (tilePadding 12,2,8,2).
